@@ -277,9 +277,11 @@ function editCopies(e,idx){
 
 // Manual tier selection from dropdown
 function setTier(idx,val){
-  state[idx].tier=parseInt(val);
-  save();render();
-}
+  var c=state[idx];
+  c.tier=parseInt(val);
+  var hero=getHero(c.hero);
+  if(hero){var th=TH[c.rarity][c.tier];if(typeof th==="number")c.copies=th;}
+  save();render();}
 
 function setTarget(idx,val){
   state[idx].targetIdx=parseInt(val);
