@@ -45,6 +45,11 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 .tier-sel select{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;border:1px solid #3a4a5a;cursor:pointer;background:#1a2940;color:#e0e0e0}
 .tier-sel select.s{background:#f0c040;color:#0f1923;border-color:#f0c040}
 .tier-sel select.a{background:#8866cc;color:#fff;border-color:#8866cc}
+.hdr .nav-links{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hdr .nav-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.hdr .nav-btn.active{color:#f0c040;border-color:#f0c040}
+.hdr .nav-btn:not(.active){color:#667;border-color:#3a4a5a}
+.hdr .nav-btn:not(.active):hover{color:#aaa;border-color:#667}
 /* popup */
 .overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:999}
 .popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a2940;border:2px solid #f0c040;border-radius:14px;z-index:1000;max-width:500px;width:92vw;max-height:80vh;overflow:hidden}
@@ -64,7 +69,14 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 </style>
 </head>
 <body>
-<div class="hdr"><span style="font-size:24px">⚔️</span><h1>Wish List Tracker v2</h1><a href="hero-database.html" style="margin-left:auto;color:#f0c040;font-size:12px;text-decoration:none;border:1px solid #f0c040;padding:4px 12px;border-radius:6px;cursor:pointer">Hero Database →</a></div>
+<div class="hdr">
+  <span style="font-size:24px">&#9876;&#65039;</span>
+  <h1>Wish List Tracker v2</h1>
+  <div class="nav-links">
+    <a class="nav-btn active" href="wishlist-mockup-design.html">&#x1F4CB; Wish List</a>
+    <a class="nav-btn" href="hero-database.html">&#x1F5C4;&#xFE0F; Hero DB</a>
+  </div>
+</div>
 <div class="ct" id="app"></div>
 <div class="overlay" id="overlay" onclick="closePopup()"></div>
 <div class="popup" id="popup">
