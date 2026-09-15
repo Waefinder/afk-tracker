@@ -160,7 +160,7 @@ function render(){
   html+='<div class="grid-header">A-Level</div><div class="grid-header">A-Level</div>';
   
   FACTIONS.forEach(function(faction,fi){
-    html+='<div class="row-label">'+FA[faction].icon+' '+faction+'</div>';
+    html+='<div class="row-label '+FA[faction].cls+'">'+FA[faction].icon+' '+faction+'</div>';
     for(var ci=0;ci<4;ci++){
       var idx=fi*4+ci;
       var cell=state[idx];
