@@ -116,6 +116,7 @@ function copiesToTarget(copies,rarity,targetIdx){
 // State: array of 16 cells (4 factions x 4 slots each)
 var state=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");
 var KS="afk_wl_v2";
+var STATE_VER=2; // bump to force reset when init logic changes
 
 // Default heroes from v1 — placed by REAL rarity, not position.
 // Columns 0-1 = S-Level (first two S heroes of the faction), columns 2-3 = A-Level (first two A).
@@ -280,7 +281,8 @@ function renderPopup(faction,rarity){
   document.getElementById('popupList').innerHTML=html;
 }
 
-if(!state){state=initDefault();save();}
+var savedVer=parseInt(localStorage.getItem("afk_wl_v2_ver")||"0");
+if(!state || savedVer!==STATE_VER){state=initDefault();localStorage.setItem("afk_wl_v2_ver",STATE_VER);save();}
 render();
 </script>
 </body>
