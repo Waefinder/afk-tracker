@@ -200,13 +200,13 @@ function render(){
         html+='<div class="cell empty" onclick="openPopup('+idx+')"><div style="font-size:30px;margin:20px 0">+</div><div style="font-size:10px;color:#8899aa">Add Hero</div></div>';
       }else{
         var tier=getTier(cell.copies,hero.r);
-        var tierName=TI[tier];
         var need=copiesToNext(cell.copies,hero.r);
         var toTarget=copiesToTarget(cell.copies,hero.r,cell.targetIdx);
         html+='<div class="cell" onclick="openPopup('+idx+')">';
         html+='<img src="'+hero.img+'" onerror="this.style.display=\'none\'">';
         html+='<div class="nm">'+hero.n+'</div>';
-        html+='<div class="tier '+hero.r.toLowerCase()+'">'+tierName+'</div>';
+        // current tier badge (derived from copies, shown as-is)
+        html+='<span class="tier '+hero.r.toLowerCase()+'">'+TI[tier]+'</span>';
         if(need>=0){html+='<div class="need">Need <strong>'+need+'</strong> more</div>';}
         else{html+='<div class="need done">✓ Max</div>';}
         html+='<div class="cpy-row">';
@@ -267,6 +267,7 @@ function editCopies(e,idx){
   input.addEventListener('input',function(){var d=input.value.replace(/[^0-9]/g,'');if(d!==input.value)input.value=d;});
 }
 
+// Tier badge is derived from copies — no manual tier picker in v2 spec
 function setTarget(idx,val){
   state[idx].targetIdx=parseInt(val);
   save();render();
