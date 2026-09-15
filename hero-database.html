@@ -9,8 +9,11 @@
 body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-height:100vh}
 .hdr{background:linear-gradient(135deg,#1a2940,#0f1923);padding:14px 20px;border-bottom:2px solid #f0c040;display:flex;align-items:center;gap:12px}
 .hdr h1{font-size:18px;color:#f0c040}
-.hdr .back{color:#8899aa;font-size:13px;text-decoration:none}
-.hdr .back:hover{color:#f0c040}
+.hdr .nav-links{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hdr .nav-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.hdr .nav-btn.active{color:#f0c040;border-color:#f0c040}
+.hdr .nav-btn:not(.active){color:#667;border-color:#3a4a5a}
+.hdr .nav-btn:not(.active):hover{color:#aaa;border-color:#667}
 .ct{max-width:1200px;margin:0 auto;padding:16px}
 /* Search bar */
 .search-bar{margin-bottom:12px}
@@ -319,11 +322,6 @@ document.getElementById("search").addEventListener("input",function(e){
 });
 
 // Back link
-document.querySelector(".back").addEventListener("click",function(e){
-  e.preventDefault();
-  window.location.href="wishlist-mockup-design.html";
-});
-
 render();
 </script>
 </body>
