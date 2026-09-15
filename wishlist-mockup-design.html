@@ -42,6 +42,9 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 /* target */
 .tgt-row{font-size:9px;color:#8899aa;margin-top:2px}
 .tgt-row select{font-size:9px;background:#1a2940;color:#e0e0e0;border:1px solid #3a4a5a;border-radius:3px;padding:1px 2px;cursor:pointer}
+.tier-sel select{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;border:1px solid #3a4a5a;cursor:pointer;background:#1a2940;color:#e0e0e0}
+.tier-sel select.s{background:#f0c040;color:#0f1923;border-color:#f0c040}
+.tier-sel select.a{background:#8866cc;color:#fff;border-color:#8866cc}
 /* popup */
 .overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:999}
 .popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a2940;border:2px solid #f0c040;border-radius:14px;z-index:1000;max-width:500px;width:92vw;max-height:80vh;overflow:hidden}
@@ -146,7 +149,7 @@ function copiesToTarget(copies,rarity,targetIdx){
 // State: array of 16 cells (4 factions x 4 slots each)
 var state=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");
 var KS="afk_wl_v2";
-var STATE_VER=2; // bump to force reset when init logic changes
+var STATE_VER=3; // bump to force reset when init logic changes
 
 // Default heroes from v1 — placed by REAL rarity, not position.
 // Columns 0-1 = S-Level (first two S heroes of the faction), columns 2-3 = A-Level (first two A).
@@ -167,12 +170,12 @@ function initDefault(){
       if(i===0||i===1){
         // S-Level columns: first two S heroes (empty slot if fewer)
         var name=(i<sList.length)?sList[i]:null;
-        s.push({hero:name,faction:faction,rarity:'S',copies:1,targetIdx:13});
+        s.push({hero:name,faction:faction,rarity:'S',copies:1,targetIdx:13,tier:2});
       }else{
         // A-Level columns: first two A heroes (empty slot if fewer)
         var j=i-2;
         var name=(j<aList.length)?aList[j]:null;
-        s.push({hero:name,faction:faction,rarity:'A',copies:1,targetIdx:13});
+        s.push({hero:name,faction:faction,rarity:'A',copies:1,targetIdx:13,tier:0});
       }
     }
   });
@@ -206,7 +209,10 @@ function render(){
         html+='<img src="'+hero.img+'" onerror="this.style.display=\'none\'">';
         html+='<div class="nm">'+hero.n+'</div>';
         // current tier badge (derived from copies, shown as-is)
-        html+='<span class="tier '+hero.r.toLowerCase()+'">'+TI[tier]+'</span>';
+        var startTier_t=(hero.r==="A")?0:2;
+        html+='<div class="tier-sel"><select onclick="event.stopPropagation()" onchange="setTier('+idx+',this.value)">';
+        for(var tt=startTier_t;tt<14;tt++){html+='<option value="'+tt+'"'+(cell.tier===tt?' selected':'')+'>'+TI[tt]+'</option>';}
+        html+='</select></div>';
         if(need>=0){html+='<div class="need">Need <strong>'+need+'</strong> more</div>';}
         else{html+='<div class="need done">✓ Max</div>';}
         html+='<div class="cpy-row">';
@@ -236,6 +242,8 @@ function adjCopies(idx,delta){
   var c=state[idx];
   c.copies=Math.max(1,c.copies+delta);
   clampCopies(c);
+  var derived=getTier(c.copies,c.rarity);
+  if(derived>c.tier)c.tier=derived;
   save();render();
 }
 function clampCopies(cell){
@@ -267,7 +275,12 @@ function editCopies(e,idx){
   input.addEventListener('input',function(){var d=input.value.replace(/[^0-9]/g,'');if(d!==input.value)input.value=d;});
 }
 
-// Tier badge is derived from copies — no manual tier picker in v2 spec
+// Manual tier selection from dropdown
+function setTier(idx,val){
+  state[idx].tier=parseInt(val);
+  save();render();
+}
+
 function setTarget(idx,val){
   state[idx].targetIdx=parseInt(val);
   save();render();
@@ -292,6 +305,7 @@ function selectHero(name){
   cell.hero=name;
   var hero=getHero(name);
   if(hero)cell.rarity=hero.r;
+  cell.tier=getTier(cell.copies,cell.rarity);
   save();closePopup();render();
 }
 function renderPopup(faction,rarity){
@@ -313,7 +327,8 @@ function renderPopup(faction,rarity){
 }
 
 var savedVer=parseInt(localStorage.getItem("afk_wl_v2_ver")||"0");
-if(!state || savedVer!==STATE_VER){state=initDefault();localStorage.setItem("afk_wl_v2_ver",STATE_VER);save();}
+if(!state || savedVer!==STATE_VER){state=initDefault();localStorage.setItem('afk_wl_v2_ver',STATE_VER);save();}
+state.forEach(function(c){if(typeof c.tier!=='number')c.tier=getTier(c.copies,c.rarity);});
 render();
 </script>
 </body>
