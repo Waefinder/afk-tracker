@@ -232,7 +232,7 @@ function render(){
     // Copies +/-
     html+='<td><div class="cpy-row">';
     html+='<button class="cpy-btn" onclick="adjCopiesOnHero(\''+h.n+'\',-1)">−</button>';
-    html+='<span class="cpy-val" onclick="editCopiesOnHero(\''+h.n+'\',this)">'+s.copies+'</span>';
+    html+='<span class="cpy-val" onclick="editCopiesOnHero(\''+h.n+'\',this)">'+Math.max(0,s.copies-TH[heroRarity][tier])+'</span>';
     html+='<button class="cpy-btn" onclick="adjCopiesOnHero(\''+h.n+'\',1)">+</button>';
     html+='</div></td>';
     // Need
@@ -266,7 +266,9 @@ function setTierOnHero(name,val){
 function adjCopiesOnHero(name,delta){
   var hs=getHeroState(name);
   var c=hs.state;
-  c.copies=Math.max(1,c.copies+delta);
+  var t1=c.tier||getTier(c.copies,c.rarity);
+  var rem=c.copies-TH[c.rarity][t1]+delta;
+  c.copies=TH[c.rarity][t1]+Math.max(0,rem);
   clampCopies(c);
   setHeroState(name,"copies",c.copies);
   var h=HS.find(function(x){return x.n===name;});
@@ -282,13 +284,19 @@ function editCopiesOnHero(name,el){
   var input=document.createElement("input");
   input.type="text";
   var hs=getHeroState(name);
-  input.value=hs.state.copies;
+  var hR=HS.find(function(x){return x.n===name;});
+  var heroR=hR?hR.r:"A";
+  var tierV=hs.state.tier||getTier(hs.state.copies,heroR);
+  input.value=Math.max(0,hs.state.copies-TH[heroR][tierV]);
   el.innerHTML="";
   el.appendChild(input);
   input.focus();input.select();
   function commit(){
     var v=Math.max(0,Math.min(999,parseInt(input.value)||0));
-    setHeroState(name,"copies",v);
+    var hR2=HS.find(function(x){return x.n===name;});
+    var heroR2=hR2?hR2.r:"A";
+    var tierV2=getHeroState(name).state.tier||getTier(getHeroState(name).state.copies,heroR2);
+    setHeroState(name,"copies",TH[heroR2][tierV2]+v);
     var h=HS.find(function(x){return x.n===name;});
     if(h){
       var derived=getTier(v,h.r);
