@@ -18,10 +18,14 @@ window.fetch=function(url,opts){
   window.__calls.push({url:url,method:opts.method||'GET',body:opts.body||null});
   if((opts.method||'GET')==='GET'){
     var content=window.__staleGET?'{"d":{"afk9":"STALE"},"t":{}}':(window.__lastPATCH||JSON.stringify(CLOUD));
-    return Promise.resolve({ok:true,json:function(){return Promise.resolve({files:{'afk-state.json':{content:content}}});}});
+    var txt=JSON.stringify({files:{'afk-state.json':{content:content}}});
+    return Promise.resolve({ok:true,text:function(){return Promise.resolve(txt);}});
   }
+  if(window.__fail409){window.__fail409=false;
+    return Promise.resolve({ok:false,status:409,text:function(){return Promise.resolve('{"message":"Conflict"}');}});}
   window.__lastPATCH=JSON.parse(opts.body).files['afk-state.json'].content; // echo back like a real gist
-  return Promise.resolve({ok:true,json:function(){return Promise.resolve({id:'x'});}});
+  var txt=JSON.stringify({id:'x'});
+  return Promise.resolve({ok:true,text:function(){return Promise.resolve(txt);}});
 };
 </script>
 <script src="cloud.js"></script>
@@ -57,9 +61,16 @@ document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){
       setTimeout(function(){
         out.staleBtn=btn.textContent;
         out.staleErr=(btn.textContent==='☁️✗');
-        // clear test pollution
-        ['cloud_tok','cloud_gist','afk9','afk9__ts','afk_wl_v2','afk_wl_v2__ts','afk_rc_v1','afk_rc_v1__ts'].forEach(function(k){localStorage.removeItem(k);});
-        document.body.textContent='RESULT:'+JSON.stringify(out,null,1);
+        // 3) 409 conflict once -> retry after 800ms must succeed (the bug fix)
+        window.__staleGET=false; window.__fail409=true;
+        btn.click();
+        setTimeout(function(){
+          out.retryBtn=btn.textContent;
+          out.retryOK=(btn.textContent==='☁️✓');
+          // clear test pollution
+          ['cloud_tok','cloud_gist','afk9','afk9__ts','afk_wl_v2','afk_wl_v2__ts','afk_rc_v1','afk_rc_v1__ts'].forEach(function(k){localStorage.removeItem(k);});
+          document.body.textContent='RESULT:'+JSON.stringify(out,null,1);
+        },1500);
       },400);
     },400);
   },2200);

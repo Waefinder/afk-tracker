@@ -22,13 +22,33 @@
   function schedule(){if(timer)clearTimeout(timer);timer=setTimeout(save,1500);}
   function api(method,path,body){
     return fetch("https://api.github.com"+path,{method:method,headers:{
-      "Authorization":"token "+raw(K_TOK),"Accept":"application/vnd.github+json"},
+      "Authorization":"token "+raw(K_TOK),"Accept":"application/vnd.github+json",
+      "Content-Type":"application/json"},
       body:body?JSON.stringify(body):undefined})
-      .then(function(r){if(!r.ok)throw new Error(method+" "+path+" -> "+r.status);return r.json();});
+      .then(function(r){return r.text().then(function(t){
+        if(!r.ok)throw new Error(method+" "+path+" -> "+r.status+" "+t.slice(0,300));
+        try{return JSON.parse(t);}catch(e){return {};}
+      });});
+  }
+  var inflight=false,pending=false;
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+  // serialize การเขียน: ห้ามมี 2 PATCH พร้อมกัน (ต้นเหตุ 409 Conflict) + retry 1 ครั้งถ้าโดนขัดจาก tab อื่น
+  function doPatch(){
+    if(inflight){pending=true;return Promise.resolve();}
+    inflight=true;
+    function go(){return api("PATCH","/gists/"+raw(K_GIST),
+      {files:{"afk-state.json":{content:payload()}}});}
+    var p=go().catch(function(e){
+        if(String(e).indexOf("-> 409")<0)throw e;
+        return wait(800).then(go);
+      })
+      .then(function(r){fin();return r;},function(e){fin();throw e;});
+    return p;
+    function fin(){inflight=false;if(pending){pending=false;doPatch();}}
   }
   function save(){
-    var tok=raw(K_TOK),g=raw(K_GIST);if(!tok||!g)return;
-    api("PATCH","/gists/"+g,{files:{"afk-state.json":{content:payload()}}})
+    if(!raw(K_TOK)||!raw(K_GIST))return;
+    doPatch()
       .then(function(){ui("ok");})
       .catch(function(e){ui("err");console.warn("[cloud] save failed",e);});
   }
@@ -70,8 +90,9 @@
   // คลิกตอนตั้งค่าแล้ว = ทดสอบจริง: PATCH ขึ้น → GET กลับ → เทียบว่าได้เหมือนเดิม
   function testNow(){
     var g=raw(K_GIST);if(!raw(K_TOK)||!g)return;
+    if(inflight){setTimeout(testNow,600);return;} // รอ PATCH ที่กำลังวิ่งก่อน ไม่ชนกัน
     ui("wait");
-    api("PATCH","/gists/"+g,{files:{"afk-state.json":{content:payload()}}})
+    doPatch()
       .then(function(){return api("GET","/gists/"+g);})
       .then(function(j){
         var f=j.files&&j.files["afk-state.json"],c=f&&f.content;
