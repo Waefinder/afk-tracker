@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AFK Journey - Relic Calculator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#1a2940,#0f1923);padding:14px 20px;border-bottom:2px solid #f0c040;display:flex;align-items:center;gap:12px}
+.hdr h1{font-size:18px;color:#f0c040}
+.hdr .nav-links{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hdr .nav-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.hdr .nav-btn.active{color:#f0c040;border-color:#f0c040}
+.hdr .nav-btn:not(.active){color:#667;border-color:#3a4a5a}
+.hdr .nav-btn:not(.active):hover{color:#aaa;border-color:#667}
+.ct{max-width:1200px;margin:0 auto;padding:16px}
+.status{font-size:13px;color:#8899aa;margin-bottom:12px;padding:8px 12px;background:#1a2940;border-radius:6px;border:1px solid #2a3a4a}
+.status strong{color:#f0c040}
+.fc-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.fc-card{background:#1a2940;border:1px solid #2a3a4a;border-radius:8px;padding:10px}
+.fc-card .fn{font-size:12px;font-weight:700;margin-bottom:4px}
+.fc-card .big{font-size:22px;font-weight:700;color:#f0c040}
+.fc-card .sub{font-size:10px;color:#8899aa;margin-top:2px}
+.bar{height:6px;background:#0f1923;border-radius:3px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:#f0c040;border-radius:3px}
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.toolbar input{flex:1;padding:10px 14px;background:#1a2940;border:1px solid #3a4a5a;border-radius:8px;color:#e0e0e0;font-size:14px;outline:none}
+.toolbar input:focus{border-color:#f0c040}
+.toolbar button{padding:8px 12px;border-radius:8px;border:1px solid #3a4a5a;background:#1a2940;color:#8899aa;font-size:12px;cursor:pointer}
+.toolbar button:hover{border-color:#f0c040;color:#e0e0e0}
+.fh{font-size:14px;font-weight:700;color:#f0c040;margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #2a3a4a;display:flex;align-items:center;gap:8px}
+.fh .cnt{font-size:11px;color:#667;font-weight:400}
+.fh .mini{margin-left:auto;font-size:10px;color:#667;cursor:pointer;border:1px solid #2a3a4a;border-radius:4px;padding:2px 7px}
+.fh .mini:hover{color:#f0c040;border-color:#f0c040}
+.row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-bottom:1px solid #1a2530;background:#131f2b}
+.row.on{background:#1a2940;border-left:3px solid #f0c040}
+.row input[type=checkbox]{accent-color:#f0c040;width:16px;height:16px;cursor:pointer}
+.row img{width:36px;height:36px;border-radius:6px;background:#2a3a4a;object-fit:cover}
+.row .nm{font-size:13px;font-weight:600;min-width:120px}
+.row .meta{font-size:10px;color:#8899aa}
+.rs{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
+.rs.s{background:#f0c040;color:#0f1923}.rs.a{background:#8866cc;color:#fff}
+.now{font-size:11px;color:#8899aa;min-width:120px}
+.now b{color:#e0e0e0}
+.row .tgt{margin-left:auto;display:flex;align-items:center;gap:8px}
+.row .tgt select{font-size:11px;padding:4px 5px;border-radius:4px;border:1px solid #3a4a5a;background:#1a2940;color:#e0e0e0;cursor:pointer}
+.row .need{font-size:12px;font-weight:700;color:#f0c040;min-width:74px;text-align:right}
+.row .need.done{color:#66aa66}
+.empty{color:#556;font-size:12px;padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <span style="font-size:24px">&#128737;&#65039;</span>
+  <h1>Relic Calculator</h1>
+  <div class="nav-links">
+    <a class="nav-btn" href="wishlist-mockup-design.html">&#x1F4CB; Wish List</a>
+    <a class="nav-btn" href="hero-database.html">&#x1F5C4;&#xFE0F; Hero DB</a>
+    <a class="nav-btn active" href="relic-calculator.html">&#128737;&#65039; Relic Calc</a>
+  </div>
+</div>
+<div class="ct">
+  <div class="status" id="status"></div>
+  <div class="fc-cards" id="cards"></div>
+  <div class="toolbar">
+    <input type="text" id="q" placeholder="Search hero..." autocomplete="off">
+    <button onclick="clearAll()">ล้างทั้งหมด</button>
+  </div>
+  <div id="list"></div>
+</div>
+<script>
+var HS=[{n:"Aliceth",f:"Celestial",r:"S",c:"Marksman",img:"img/Aliceth.webp"},{n:"Alna",f:"Celestial",r:"S",c:"Tank",img:"img/Alna.webp"},{n:"Alsa",f:"Mauler",r:"S",c:"Mage",img:"img/Alsa.webp"},{n:"Antandra",f:"Mauler",r:"A",c:"Tank",img:"img/Antandra.webp"},{n:"Arden",f:"Wilder",r:"A",c:"Mage",img:"img/Arden.webp"},{n:"Aster",f:"Hypogean",r:"S",c:"Mage",img:"img/Aster.webp"},{n:"Atalanta",f:"Lightbearer",r:"S",c:"Marksman",img:"img/Atalanta.webp"},{n:"Athalia",f:"Celestial",r:"S",c:"Rogue",img:"img/Athalia.webp"},{n:"Aurora",f:"Celestial",r:"S",c:"Mage",img:"img/Aurora.webp"},{n:"Baelran",f:"Celestial",r:"S",c:"Warrior",img:"img/Baelran.webp"},{n:"Berial",f:"Hypogean",r:"S",c:"Rogue",img:"img/Berial.webp"},{n:"Bonnie",f:"Graveborn",r:"A",c:"Marksman",img:"img/Bonnie.webp"},{n:"Brutus",f:"Mauler",r:"S",c:"Warrior",img:"img/Brutus.webp"},{n:"Bryon",f:"Wilder",r:"S",c:"Marksman",img:"img/Bryon.webp"},{n:"Callan",f:"Graveborn",r:"A",c:"Tank",img:"img/Callan.webp"},{n:"Carolina",f:"Graveborn",r:"S",c:"Mage",img:"img/Carolina.webp"},{n:"Cassadee",f:"Lightbearer",r:"S",c:"Mage",img:"img/Cassadee.webp"},{n:"Cecia",f:"Graveborn",r:"S",c:"Marksman",img:"img/Cecia.webp"},{n:"Chippy",f:"Lightbearer",r:"A",c:"Tank",img:"img/Chippy.webp"},{n:"Contess",f:"Hypogean",r:"S",c:"Support",img:"img/Contess.webp"},{n:"Cryonaia",f:"Hypogean",r:"S",c:"Mage",img:"img/Cryonaia.webp"},{n:"Cyran",f:"Lightbearer",r:"S",c:"Mage",img:"img/Cyran.webp"},{n:"Daimon",f:"Graveborn",r:"S",c:"Tank",img:"img/Daimon.webp"},{n:"Damian",f:"Wilder",r:"A",c:"Support",img:"img/Damian.webp"},{n:"Dionel",f:"Celestial",r:"S",c:"Marksman",img:"img/Dionel.webp"},{n:"Dunlingr",f:"Celestial",r:"S",c:"Tank",img:"img/Dunlingr.webp"},{n:"Eironn",f:"Wilder",r:"S",c:"Rogue",img:"img/Eironn.webp"},{n:"Elijah_Lailah",f:"Celestial",r:"S",c:"Support",img:"img/Elijah_Lailah.webp"},{n:"Eryndor",f:"Graveborn",r:"S",c:"Mage",img:"img/Eryndor.webp"},{n:"Evie",f:"Lightbearer",r:"A",c:"Support",img:"img/Evie.webp"},{n:"Faramor",f:"Wilder",r:"A",c:"Rogue",img:"img/Faramor.webp"},{n:"Fay",f:"Lightbearer",r:"A",c:"Support",img:"img/Fay.webp"},{n:"Florabelle",f:"Wilder",r:"S",c:"Warrior",img:"img/Florabelle.webp"},{n:"Frieren",f:"Dimensional",r:"S",c:"Mage",img:"img/Frieren.webp"},{n:"Galahad",f:"Mauler",r:"S",c:"Mage",img:"img/Galahad.webp"},{n:"Gerda",f:"Mauler",r:"A",c:"Tank",img:"img/Gerda.webp"},{n:"Granny_Dahnie",f:"Wilder",r:"S",c:"Tank",img:"img/Granny_Dahnie.webp"},{n:"Gunnar",f:"Hypogean",r:"S",c:"Tank",img:"img/Gunnar.webp"},{n:"Gwyneth",f:"Lightbearer",r:"S",c:"Marksman",img:"img/Gwyneth.webp"},{n:"Hammie",f:"Lightbearer",r:"A",c:"Support",img:"img/Hammie.webp"},{n:"Harak",f:"Hypogean",r:"S",c:"Warrior",img:"img/Harak.webp"},{n:"Hepler",f:"Mauler",r:"S",c:"Tank",img:"img/Hepler.webp"},{n:"Hewynn",f:"Wilder",r:"S",c:"Support",img:"img/Hewynn.webp"},{n:"Himmel",f:"Dimensional",r:"A",c:"Warrior",img:"img/Himmel.webp"},{n:"Hodgkin",f:"Graveborn",r:"S",c:"Warrior",img:"img/Hodgkin.webp"},{n:"Hugin",f:"Lightbearer",r:"A",c:"Support",img:"img/Hugin.webp"},{n:"Igor",f:"Graveborn",r:"S",c:"Warrior",img:"img/Igor.webp"},{n:"Indris",f:"Wilder",r:"S",c:"Marksman",img:"img/Indris.webp"},{n:"Isabella",f:"Graveborn",r:"A",c:"Support",img:"img/Isabella.webp"},{n:"Kafra",f:"Wilder",r:"A",c:"Warrior",img:"img/Kafra.webp"},{n:"Karma",f:"Graveborn",r:"A",c:"Tank",img:"img/Karma.webp"},{n:"Kazim",f:"Mauler",r:"A",c:"Marksman",img:"img/Kazim.webp"},{n:"Koko",f:"Mauler",r:"A",c:"Support",img:"img/Koko.webp"},{n:"Kordan",f:"Mauler",r:"A",c:"Warrior",img:"img/Kordan.webp"},{n:"Korin",f:"Lightbearer",r:"A",c:"Warrior",img:"img/Korin.webp"},{n:"Kruger",f:"Mauler",r:"A",c:"Warrior",img:"img/Kruger.webp"},{n:"Kulu",f:"Hypogean",r:"S",c:"Marksman",img:"img/Kulu.webp"},{n:"Laios",f:"Dimensional",r:"A",c:"Warrior",img:"img/Laios.webp"},{n:"Lamentis",f:"Hypogean",r:"S",c:"Marksman",img:"img/Lamentis.webp"},{n:"Lenya",f:"Wilder",r:"A",c:"Rogue",img:"img/Lenya.webp"},{n:"Lily_May",f:"Wilder",r:"S",c:"Rogue",img:"img/Lily_May.webp"},{n:"Lorsan",f:"Wilder",r:"S",c:"Support",img:"img/Lorsan.webp"},{n:"Lucca",f:"Lightbearer",r:"A",c:"Tank",img:"img/Lucca.webp"},{n:"Lucius",f:"Lightbearer",r:"A",c:"Tank",img:"img/Lucius.webp"},{n:"Lucy",f:"Dimensional",r:"A",c:"Mage",img:"img/Lucy.webp"},{n:"Ludovic",f:"Graveborn",r:"S",c:"Support",img:"img/Ludovic.webp"},{n:"Lumont",f:"Mauler",r:"S",c:"Tank",img:"img/Lumont.webp"},{n:"Lyca",f:"Wilder",r:"A",c:"Marksman",img:"img/Lyca.webp"},{n:"Marcille",f:"Dimensional",r:"S",c:"Mage",img:"img/Marcille.webp"},{n:"Marilee",f:"Lightbearer",r:"A",c:"Marksman",img:"img/Marilee.webp"},{n:"Mehira",f:"Hypogean",r:"S",c:"Mage",img:"img/Mehira.webp"},{n:"Mikola",f:"Mauler",r:"S",c:"Support",img:"img/Mikola.webp"},{n:"Mirael",f:"Lightbearer",r:"A",c:"Mage",img:"img/Mirael.webp"},{n:"Nara",f:"Graveborn",r:"S",c:"Rogue",img:"img/Nara.webp"},{n:"Natsu",f:"Dimensional",r:"S",c:"Warrior",img:"img/Natsu.webp"},{n:"Nazrik",f:"Mauler",r:"S",c:"Marksman",img:"img/Nazrik.webp"},{n:"Nerion",f:"Graveborn",r:"A",c:"Marksman",img:"img/Nerion.webp"},{n:"Niru",f:"Graveborn",r:"A",c:"Support",img:"img/Niru.webp"},{n:"Odie",f:"Mauler",r:"A",c:"Marksman",img:"img/Odie.webp"},{n:"Orion",f:"Lightbearer",r:"S",c:"Warrior",img:"img/Orion.webp"},{n:"Pandora",f:"Dimensional",r:"S",c:"Support",img:"img/Pandora.webp"},{n:"Pang",f:"Wilder",r:"S",c:"Warrior",img:"img/Pang.webp"},{n:"Parisa",f:"Wilder",r:"A",c:"Mage",img:"img/Parisa.webp"},{n:"Peggy",f:"Lightbearer",r:"S",c:"Support",img:"img/Peggy.webp"},{n:"Perseus",f:"Lightbearer",r:"S",c:"Warrior",img:"img/Perseus.webp"},{n:"Phraesto",f:"Hypogean",r:"S",c:"Tank",img:"img/Phraesto.webp"},{n:"Pippa",f:"Wilder",r:"S",c:"Mage",img:"img/Pippa.webp"},{n:"Ravion",f:"Wilder",r:"S",c:"Rogue",img:"img/Ravion.webp"},{n:"Reinier",f:"Hypogean",r:"S",c:"Support",img:"img/Reinier.webp"},{n:"Rhys",f:"Mauler",r:"S",c:"Marksman",img:"img/Rhys.webp"},{n:"Rolan",f:"Celestial",r:"S",c:"Support",img:"img/Rolan.webp"},{n:"Rowan",f:"Lightbearer",r:"S",c:"Support",img:"img/Rowan.webp"},{n:"Saida",f:"Hypogean",r:"S",c:"Rogue",img:"img/Saida.webp"},{n:"Salazer",f:"Graveborn",r:"A",c:"Rogue",img:"img/Salazer.webp"},{n:"Satrana",f:"Mauler",r:"A",c:"Mage",img:"img/Satrana.webp"},{n:"Scarlita",f:"Celestial",r:"S",c:"Warrior",img:"img/Scarlita.webp"},{n:"Senea",f:"Graveborn",r:"S",c:"Marksman",img:"img/Senea.webp"},{n:"Seth",f:"Mauler",r:"A",c:"Rogue",img:"img/Seth.webp"},{n:"Shadewing",f:"Graveborn",r:"A",c:"Rogue",img:"img/Shadewing.webp"},{n:"Shakir",f:"Mauler",r:"S",c:"Rogue",img:"img/Shakir.webp"},{n:"Shemira",f:"Graveborn",r:"S",c:"Mage",img:"img/Shemira.webp"},{n:"Silven",f:"Lightbearer",r:"A",c:"Marksman",img:"img/Silven.webp"},{n:"Silvina",f:"Graveborn",r:"A",c:"Rogue",img:"img/Silvina.webp"},{n:"Sinbad",f:"Lightbearer",r:"A",c:"Rogue",img:"img/Sinbad.webp"},{n:"Smokey_Meerky",f:"Mauler",r:"S",c:"Support",img:"img/Smokey_Meerky.webp"},{n:"Solise",f:"Wilder",r:"S",c:"Support",img:"img/Solise.webp"},{n:"Sonja",f:"Lightbearer",r:"S",c:"Warrior",img:"img/Sonja.webp"},{n:"Soren",f:"Mauler",r:"A",c:"Rogue",img:"img/Soren.webp"},{n:"Sylphira",f:"Celestial",r:"S",c:"Rogue",img:"img/Sylphira.webp"},{n:"Taichi_Agumon",f:"Dimensional",r:"S",c:"Warrior",img:"img/Taichi_Agumon.webp"},{n:"Talene",f:"Celestial",r:"S",c:"Mage",img:"img/Talene.webp"},{n:"Tasi",f:"Wilder",r:"S",c:"Mage",img:"img/Tasi.webp"},{n:"Temesia",f:"Lightbearer",r:"S",c:"Tank",img:"img/Temesia.webp"},{n:"Thador",f:"Wilder",r:"A",c:"Tank",img:"img/Thador.webp"},{n:"Thoran",f:"Graveborn",r:"S",c:"Tank",img:"img/Thoran.webp"},{n:"Tilaya",f:"Wilder",r:"A",c:"Warrior",img:"img/Tilaya.webp"},{n:"Ulmus",f:"Wilder",r:"A",c:"Tank",img:"img/Ulmus.webp"},{n:"Vala",f:"Lightbearer",r:"S",c:"Rogue",img:"img/Vala.webp"},{n:"Valen",f:"Lightbearer",r:"A",c:"Warrior",img:"img/Valen.webp"},{n:"Valka",f:"Graveborn",r:"A",c:"Warrior",img:"img/Valka.webp"},{n:"Velara",f:"Wilder",r:"S",c:"Support",img:"img/Velara.webp"},{n:"Viperian",f:"Graveborn",r:"A",c:"Mage",img:"img/Viperian.webp"},{n:"Voracia",f:"Mauler",r:"S",c:"Mage",img:"img/Voracia.webp"},{n:"Walker",f:"Lightbearer",r:"A",c:"Rogue",img:"img/Walker.webp"},{n:"Yamato_Gabumon",f:"Dimensional",r:"S",c:"Mage",img:"img/Yamato_Gabumon.webp"},{n:"Zandrok",f:"Mauler",r:"S",c:"Warrior",img:"img/Zandrok.webp"},{n:"Zanie",f:"Lightbearer",r:"A",c:"Marksman",img:"img/Zanie.webp"},{n:"Zorya",f:"Graveborn",r:"S",c:"Warrior",img:"img/Zorya.webp"}];
+/* ==== cost model (same as hero-database.html) ==== */
+var TI=["Elite","Elite+","Epic","Epic+","Legendary","Legendary+","Mythic","Mythic+","Supreme","Supreme+","P1","P2","P3","P4"];
+var COST_A=[1,3,4,5,8,10,12,0,20];
+var COST_S=[0,0,1,0,2,0,2,0,2];
+var PARAGON_A=[45,45,68,68];
+var PARAGON_S=[6,6,9,9];
+var TH={A:[],S:[]};
+(function(){var ca=1,cs=1;TH.A[0]=1;TH.S[2]=1;
+for(var i=0;i<9;i++){ca+=COST_A[i];TH.A[i+1]=ca;}
+for(var i=2;i<9;i++){cs+=COST_S[i];TH.S[i+1]=cs;}
+var pa=64,ps=8;
+for(var p=0;p<4;p++){pa+=PARAGON_A[p];ps+=PARAGON_S[p];TH.A[10+p]=pa;TH.S[10+p]=ps;}})();
+function getTier(copies,rarity){var t=(rarity==='A')?0:2,th=TH[rarity];for(var i=t;i<14;i++){if(copies>=th[i])t=i;else break;}return t;}
+// sigils still needed: first copy is the hero itself (free), everything else costs
+function needSigils(copies,rarity,targetIdx){var th=TH[rarity];if(th[targetIdx]===undefined)return 0;return Math.max(0,th[targetIdx]-Math.max(copies,1));}
+/* ==== targets: S+ / P1..P4 ==== */
+var TARGETS=[9,10,11,12,13];
+/* ==== state ==== */
+var SEL=JSON.parse(localStorage.getItem("afk_rc_v1")||"{}");            // {heroName: targetIdx}
+var PROG={};                                                            // heroName -> copies (shared from Hero DB / Wish List)
+(function(){var s=JSON.parse(localStorage.getItem("afk_wl_v2")||"[]")||[];
+for(var i=0;i<s.length;i++){if(s[i]&&s[i].hero)PROG[s[i].hero]=s[i].copies||0;}})();
+function save(){localStorage.setItem("afk_rc_v1",JSON.stringify(SEL));}
+function copies(n){return PROG[n]||0;}
+function toggle(n){if(SEL[n]===undefined)SEL[n]=13;else delete SEL[n];save();render();}
+function setTgt(n,v){SEL[n]=parseInt(v);save();render();}
+function clearAll(){SEL={};save();render();}
+function factionAll(f,on){HS.forEach(h=>{if(h.f===f){if(on)SEL[h.n]=SEL[h.n]||13;else delete SEL[h.n];}});save();render();}
+var q="";
+document.getElementById("q").addEventListener("input",e=>{q=e.target.value.toLowerCase();render();});
+
+function render(){
+  // faction summary (selected heroes only, sorted by sigils needed desc = ขาดเยอะสุด)
+  var fac={},total=0,p4=0,selN=0;
+  HS.forEach(h=>{
+    var t=SEL[h.n]; if(t===undefined)return;
+    var need=needSigils(copies(h.n),h.r,t);
+    var f=fac[h.f]||(fac[h.f]={n:0,p4:0,sig:0});
+    f.n++; f.sig+=need; if(t===13)f.p4++;
+    total+=need; selN++; if(t===13)p4++;
+  });
+  var arr=Object.keys(fac).map(k=>({f:k,d:fac[k]})).sort((a,b)=>b.d.sig-a.d.sig);
+  var max=arr.length?arr[0].d.sig:1;
+  document.getElementById("status").innerHTML=
+    'เลือกปั้น <strong>'+selN+'</strong> ตัว | ปั้นถึง P4: <strong>'+p4+'</strong> ตัว | ขาดรวม <strong>'+total+'</strong> Sigils'+
+    (arr.length?' | เผ่าที่ขาดเยอะสุด: <strong>'+arr[0].f+'</strong>':'');
+  document.getElementById("cards").innerHTML=arr.map(x=>
+    '<div class="fc-card"><div class="fn">'+x.f+'</div><div class="big">'+x.d.sig+'</div>'+
+    '<div class="sub">Sigils · '+x.d.n+' ตัว · P4: '+x.d.p4+' ตัว</div>'+
+    '<div class="bar"><i style="width:'+Math.round(x.d.sig/max*100)+'%"></i></div></div>').join("");
+
+  // rows grouped by faction
+  var html="";
+  ["Lightbearer","Mauler","Wilder","Graveborn","Celestial","Hypogean","Dimensional"].forEach(f=>{
+    var heroes=HS.filter(h=>h.f===f&&(!q||h.n.toLowerCase().indexOf(q)>=0));
+    if(!heroes.length)return;
+    var on=heroes.filter(h=>SEL[h.n]!==undefined).length;
+    html+='<div class="fh">'+f+'<span class="cnt">('+on+'/'+heroes.length+')</span>'+
+          '<span class="mini" onclick="factionAll(\''+f+'\',true)">all</span>'+
+          '<span class="mini" onclick="factionAll(\''+f+'\',false)">none</span></div>';
+    heroes.forEach(h=>{
+      var t=SEL[h.n], c=copies(h.n), tier=getTier(c,h.r);
+      var need=t===undefined?null:needSigils(c,h.r,t);
+      html+='<div class="row'+(t!==undefined?' on':'')+'">'+
+        '<input type="checkbox" '+(t!==undefined?'checked':'')+' onchange="toggle(\''+h.n+'\')">'+
+        '<img src="'+h.img+'"><div><div class="nm">'+h.n.replace(/_/g,' ')+'</div>'+
+        '<div class="meta">'+h.c+'</div></div>'+
+        '<span class="rs '+h.r.toLowerCase()+'">'+h.r+'</span>'+
+        '<span class="now">ตอนนี้ <b>'+TI[tier]+'</b> · '+c+' copies</span>'+
+        '<span class="tgt">เป้า: <select '+(t===undefined?'disabled':'')+' onchange="setTgt(\''+h.n+'\',this.value)">'+
+          TARGETS.map(v=>'<option value="'+v+'"'+(t===v?' selected':'')+'>'+TI[v]+'</option>').join("")+
+        '</select>'+
+        '<span class="need'+(need===0?' done':'')+'">'+(t===undefined?'—':(need===0?'ครบแล้ว':need+' Sigils'))+'</span></span></div>';
+    });
+  });
+  document.getElementById("list").innerHTML=html||'<div class="empty">ไม่พบฮีโร่</div>';
+}
+render();
+/* self-check: cost model vs documented totals (63/289 A, 7/37 S) */
+(function(){
+  console.assert(needSigils(0,"A",9)===63,"A->S+ must be 63");
+  console.assert(needSigils(0,"A",13)===289,"A->P4 must be 289");
+  console.assert(needSigils(0,"S",9)===7,"S->S+ must be 7");
+  console.assert(needSigils(0,"S",13)===37,"S->P4 must be 37");
+  console.assert(needSigils(64,"A",13)===226,"A at S+ -> P4 must be 226");
+  console.assert(needSigils(3,"A",9)===61,"A 3 copies -> S+");
+})();
+</script>
+</body>
+</html>
