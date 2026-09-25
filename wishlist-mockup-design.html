@@ -346,5 +346,6 @@ if(!state || savedVer!==STATE_VER){state=initDefault();localStorage.setItem('afk
 state.forEach(function(c){if(typeof c.tier!=='number')c.tier=getTier(c.copies,c.rarity);});
 render();
 </script>
+<script src="cloud.js"></script>
 </body>
 </html>
