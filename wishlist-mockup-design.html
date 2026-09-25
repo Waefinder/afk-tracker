@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AFK Journey - Wish List Tracker v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#1a2940,#0f1923);padding:14px 20px;border-bottom:2px solid #f0c040;display:flex;align-items:center;gap:12px}
+.hdr h1{font-size:18px;color:#f0c040}
+.ct{max-width:960px;margin:0 auto;padding:16px}
+/* Grid: 4 rows (factions) x 4 cols (S1,S2,A1,A2) */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.grid-header{font-size:11px;font-weight:700;color:#8899aa;text-align:center;padding:6px 0;border-bottom:1px solid #2a3a4a}
+/* Faction row labels — themed gradients + gold bottom border */
+.row-label{grid-column:1/-1;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:700;color:#fff;padding:8px 14px;border-bottom:2px solid #f0c04a;margin-top:16px;border-radius:10px}
+.row-label .f-icon{width:60px;height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:30px;background:#121d2b;border:2px solid #f0c04a;border-radius:50%;box-shadow:0 0 14px rgba(240,192,64,.7)}
+.row-label.lb{background:linear-gradient(135deg,#1a3a6a,#2a5a9a)}
+.row-label.ma{background:linear-gradient(135deg,#6a2a1a,#9a4a2a)}
+.row-label.wi{background:linear-gradient(135deg,#1a4a2a,#2a6a3a)}
+.row-label.gr{background:linear-gradient(135deg,#3a1a4a,#5a2a6a)}
+/* Hero cards — gold border + glow */
+.cell{background:#121d2b;border-radius:12px;padding:10px 6px;text-align:center;border:2px solid #f0c04a;box-shadow:0 0 8px rgba(240,192,64,.35);transition:all .15s;position:relative;min-height:200px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.cell:hover{transform:scale(1.05);box-shadow:0 0 18px rgba(240,192,64,.75)}
+.cell.empty{border-style:dashed;opacity:.6}
+.cell.empty:hover{opacity:1}
+.cell img{width:80px;height:80px;object-fit:cover;border-radius:8px;background:#2a3a4a;display:block;margin-bottom:4px}
+.cell .nm{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cell .tier{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:700;display:inline-block;margin:2px 0}
+.cell .tier.s{background:#f0c040;color:#0f1923}
+.cell .tier.a{background:#8866cc;color:#fff}
+.cell .need{font-size:9px;color:#8899aa}
+.cell .need strong{color:#f0c040}
+.cell .need.done{color:#66aa66}
+/* +/- row */
+.cpy-row{display:flex;align-items:center;gap:4px;margin:4px 0}
+.cpy-btn{width:24px;height:24px;border-radius:4px;border:1px solid #3a4a5a;background:#1a2940;color:#f0c040;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cpy-btn:hover{background:#2a3a5a}
+.cpy-val{width:36px;text-align:center;font-size:12px;font-weight:700;color:#e0e0e0;background:#1a2940;border:1px solid #3a4a5a;border-radius:4px;padding:2px;cursor:pointer}
+.cpy-val input{width:36px;text-align:center;font-size:12px;font-weight:700;color:#e0e0e0;background:#1a2940;border:1px solid #f0c040;border-radius:4px;padding:2px;outline:none}
+/* target */
+.tgt-row{font-size:9px;color:#8899aa;margin-top:2px}
+.tgt-row select{font-size:9px;background:#1a2940;color:#e0e0e0;border:1px solid #3a4a5a;border-radius:3px;padding:1px 2px;cursor:pointer}
+.tier-sel select{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;border:1px solid #3a4a5a;cursor:pointer;background:#1a2940;color:#e0e0e0}
+.tier-sel select.s{background:#f0c040;color:#0f1923;border-color:#f0c040}
+.tier-sel select.a{background:#8866cc;color:#fff;border-color:#8866cc}
+.hdr .nav-links{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hdr .nav-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.hdr .nav-btn.active{color:#f0c040;border-color:#f0c040}
+.hdr .nav-btn:not(.active){color:#667;border-color:#3a4a5a}
+.hdr .nav-btn:not(.active):hover{color:#aaa;border-color:#667}
+/* popup */
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:999}
+.popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a2940;border:2px solid #f0c040;border-radius:14px;z-index:1000;max-width:500px;width:92vw;max-height:80vh;overflow:hidden}
+.popup-hdr{padding:12px 16px;border-bottom:1px solid #2a3a4a;display:flex;justify-content:space-between;align-items:center}
+.popup-hdr h3{font-size:14px;color:#f0c040}
+.popup-close{background:none;border:none;color:#ff6644;font-size:20px;cursor:pointer;padding:0 6px}
+.popup-filters{display:none}
+.popup-list{padding:8px;overflow-y:auto;max-height:55vh}
+.popup-hero{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent}
+.popup-hero:hover{background:#121d2b;border-color:#4488cc}
+.popup-hero.active{border-color:#f0c040;background:#1a2930}
+.popup-hero img{width:40px;height:40px;border-radius:6px;object-fit:cover;background:#2a3a4a}
+.popup-hero .ph-info{flex:1}
+.popup-hero .ph-name{font-size:11px;font-weight:600}
+.popup-hero .ph-meta{font-size:9px;color:#8899aa}
+.popup-hero .ph-placed{font-size:8px;color:#f0c040;font-weight:600}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <span style="font-size:24px">&#9876;&#65039;</span>
+  <h1>Wish List Tracker v2</h1>
+  <div class="nav-links">
+    <a class="nav-btn active" href="wishlist-mockup-design.html">&#x1F4CB; Wish List</a>
+    <a class="nav-btn" href="hero-database.html">&#x1F5C4;&#xFE0F; Hero DB</a>
+  </div>
+</div>
+<div class="ct" id="app"></div>
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+<div class="popup" id="popup">
+  <div class="popup-hdr"><h3 id="popupTitle">Select Hero</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+  <div class="popup-list" id="popupList"></div>
+</div>
+<script>
+var HS = [{n:"Aliceth",f:"Celestial",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/2/28/Hero_Aliceth.png/revision/latest?cb=20250928001004"},{n:"Alna",f:"Celestial",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/e/e5/Hero_Alna.png/revision/latest?cb=20260108063517"},{n:"Alsa",f:"Mauler",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/9/9e/Hero_Alsa.png/revision/latest?cb=20251205004229"},{n:"Antandra",f:"Mauler",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/1/13/Hero_Antandra.png/revision/latest?cb=20241016144152"},{n:"Arden",f:"Wilder",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/2/29/Hero_Arden.png/revision/latest?cb=20241016144158"},{n:"Atalanta",f:"Lightbearer",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/5/55/Hero_Atalanta.png/revision/latest?cb=20241016144205"},{n:"Athalia",f:"Celestial",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/3/3c/Hero_Athalia.png/revision/latest?cb=20250327225647"},{n:"Aurora",f:"Celestial",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/5/5a/Hero_Aurora.png/revision/latest?cb=20260122202926"},{n:"Baelran",f:"Celestial",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/9/9e/Hero_Baelran.png/revision/latest?cb=20250702042041"},{n:"Berial",f:"Hypogean",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/0/0f/Hero_Berial.png/revision/latest?cb=20241016144212"},{n:"Bonnie",f:"Graveborn",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/8/8d/Hero_Bonnie.png/revision/latest?cb=20250121091252"},{n:"Brutus",f:"Mauler",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/9/91/Hero_Brutus.png/revision/latest?cb=20241016144225"},{n:"Bryon",f:"Wilder",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/9/9b/Hero_Bryon.png/revision/latest?cb=20241016144230"},{n:"Callan",f:"Graveborn",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/3/35/Hero_Callan.png/revision/latest?cb=20250121192145"},{n:"Carolina",f:"Graveborn",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/1/10/Hero_Carolina.png/revision/latest?cb=20241016144235"},{n:"Cassadee",f:"Lightbearer",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a6/Hero_Cassadee.png/revision/latest?cb=20241016144240"},{n:"Cecia",f:"Graveborn",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/3/3b/Hero_Cecia.png/revision/latest?cb=20241016144245"},{n:"Chippy",f:"Lightbearer",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/f/ff/Hero_Chippy.png/revision/latest?cb=20241016144251"},{n:"Contess",f:"Hypogean",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/d/db/Hero_Contess.png/revision/latest?cb=20260219092006"},{n:"Cryonaia",f:"Hypogean",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/5/57/Hero_Cryonaia.png/revision/latest?cb=20250213165445"},{n:"Cyran",f:"Lightbearer",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/b/b2/Hero_Cyran.png/revision/latest?cb=20250219165412"},{n:"Daimon",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/7/73/Hero_Daimon.png/revision/latest?cb=20250605121930"},{n:"Damian",f:"Wilder",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/a/ab/Hero_Damian.png/revision/latest?cb=20241016144258"},{n:"Dionel",f:"Celestial",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/6/67/Hero_Dionel.png/revision/latest?cb=20241016144303"},{n:"Dunlingr",f:"Celestial",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/4/4d/Hero_Dunlingr.png/revision/latest?cb=20241016144312"},{n:"Eironn",f:"Wilder",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/a/aa/Hero_Eironn.png/revision/latest?cb=20241016144314"},{n:"Elijah_Lailah",f:"Celestial",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a2/Hero_Elijah_%26_Lailah.png/revision/latest"},{n:"Eryndor",f:"Graveborn",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/0/08/Hero_Eryndor.png/revision/latest?cb=20260903012745"},{n:"Evie",f:"Lightbearer",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/5/53/Hero_Evie.png/revision/latest?cb=20260219112538"},{n:"Faramor",f:"Wilder",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/6/6d/Hero_Faramor.png/revision/latest?cb=20250329081618"},{n:"Fay",f:"Lightbearer",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/c/c8/Hero_Fay.png/revision/latest?cb=20241016144319"},{n:"Florabelle",f:"Wilder",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/1/13/Hero_Florabelle.png/revision/latest?cb=20241018110905"},{n:"Frieren",f:"Dimensional",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/0/04/Hero_Frieren.png/revision/latest?cb=20260501033527"},{n:"Galahad",f:"Mauler",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/9/98/Hero_Galahad.png/revision/latest?cb=20251218031001"},{n:"Gerda",f:"Mauler",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/2/29/Hero_Gerda.png/revision/latest?cb=20250310193210"},{n:"Granny_Dahnie",f:"Wilder",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/1/18/Hero_Granny_Dahnie.png/revision/latest"},{n:"Gunnar",f:"Hypogean",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/7/77/Hero_Gunnar.png/revision/latest?cb=20260303054124"},{n:"Gwyneth",f:"Lightbearer",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/2/2f/Hero_Gwyneth.png/revision/latest?cb=20260525060543"},{n:"Hammie",f:"Lightbearer",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/e/eb/Hero_Hammie.png/revision/latest?cb=20241016144333"},{n:"Harak",f:"Hypogean",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/8/81/Hero_Harak.png/revision/latest?cb=20241202055654"},{n:"Hepler",f:"Mauler",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/9/92/Hero_Hepler.png/revision/latest?cb=20260306020621"},{n:"Hewynn",f:"Wilder",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/0/0d/Hero_Hewynn.png/revision/latest?cb=20241016144338"},{n:"Himmel",f:"Dimensional",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/1/15/Hero_Himmel.png/revision/latest?cb=20260501033523"},{n:"Hodgkin",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/4/4a/Hero_Hodgkin.png/revision/latest?cb=20241116225603"},{n:"Hugin",f:"Lightbearer",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/8/8e/Hero_Hugin.png/revision/latest?cb=20241220051757"},{n:"Igor",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a2/Hero_Igor.png/revision/latest?cb=20241016144342"},{n:"Indris",f:"Wilder",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/5/59/Hero_Indris.png/revision/latest?cb=20250517075704"},{n:"Isabella",f:"Graveborn",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/d/d6/Hero_Isabella.png/revision/latest?cb=20251010083440"},{n:"Kafra",f:"Wilder",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/8/83/Hero_Kafra.png/revision/latest?cb=20241016144347"},{n:"Kazim",f:"Mauler",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/e/e8/Hero_Kazim.png/revision/latest"},{n:"Koko",f:"Mauler",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/f/f9/Hero_Koko.png/revision/latest?cb=20241016144353"},{n:"Korin",f:"Lightbearer",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/f/f4/Hero_Korin.png/revision/latest?cb=20241016144359"},{n:"Kordan",f:"Mauler",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/c/c8/Hero_Kordan.png/revision/latest?cb=20260119124024"},{n:"Kruger",f:"Mauler",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/7/71/Hero_Kruger.png/revision/latest?cb=20241016144404"},{n:"Kulu",f:"Hypogean",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/5/5c/Hero_Kulu.png/revision/latest?cb=20250517075659"},{n:"Laios",f:"Dimensional",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/2/24/Hero_Laios.png/revision/latest?cb=20251209212947"},{n:"Lamentis",f:"Hypogean",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/d/d6/Hero_Lamentis.png/revision/latest?cb=20260704081917"},{n:"Lenya",f:"Wilder",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/6/68/Hero_Lenya.png/revision/latest?cb=20241016144409"},{n:"Lily_May",f:"Wilder",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/b/be/Hero_Lily_May.png/revision/latest"},{n:"Lorsan",f:"Wilder",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/2/2d/Hero_Lorsan.png/revision/latest?cb=20250117173012"},{n:"Lucius",f:"Lightbearer",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/9/9a/Hero_Lucius.png/revision/latest?cb=20241016144418"},{n:"Lucy",f:"Dimensional",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/8/81/Hero_Lucy.png/revision/latest"},{n:"Ludovic",f:"Graveborn",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a9/Hero_Ludovic.png/revision/latest?cb=20241016144423"},{n:"Lumont",f:"Mauler",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/3/3a/Hero_Lumont.png/revision/latest?cb=20241016144428"},{n:"Lyca",f:"Wilder",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/4/4e/Hero_Lyca.png/revision/latest?cb=20241016144434"},{n:"Marcille",f:"Dimensional",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/3/3f/Hero_Marcille.png/revision/latest?cb=20251209212910"},{n:"Marilee",f:"Lightbearer",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/c/cb/Hero_Marilee.png/revision/latest?cb=20241016144439"},{n:"Mehira",f:"Hypogean",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a6/Hero_Mehira.png/revision/latest?cb=20251116175126"},{n:"Mikola",f:"Mauler",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/1/17/Hero_Mikola.png/revision/latest?cb=20241016144444"},{n:"Mirael",f:"Lightbearer",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/1/16/Hero_Mirael.png/revision/latest?cb=20241016144451"},{n:"Nara",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/5/57/Hero_Nara.png/revision/latest?cb=20241016144455"},{n:"Nazrik",f:"Mauler",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/e/ee/Hero_Nazrik.png/revision/latest?cb=20251116175243"},{n:"Natsu",f:"Dimensional",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/e/ef/Hero_Natsu.png/revision/latest"},{n:"Nerion",f:"Graveborn",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/1/15/Hero_Nerion.png/revision/latest?cb=20260515230532"},{n:"Niru",f:"Graveborn",r:"A",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/a/ad/Hero_Niru.png/revision/latest?cb=20241016144458"},{n:"Odie",f:"Mauler",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/c/c0/Hero_Odie.png/revision/latest?cb=20241016144504"},{n:"Orion",f:"Lightbearer",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/4/43/Hero_Orion.png/revision/latest?cb=20260704082027"},{n:"Pandora",f:"Dimensional",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/9/9b/Hero_Pandora.png/revision/latest"},{n:"Pang",f:"Wilder",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a3/Hero_Pang.png/revision/latest?cb=20250724143534"},{n:"Parisa",f:"Wilder",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/d/d2/Hero_Parisa.png/revision/latest?cb=20241016144509"},{n:"Peggy",f:"Lightbearer",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/9/93/Hero_Peggy.png/revision/latest?cb=20260704081906"},{n:"Perseus",f:"Lightbearer",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/e/eb/Hero_Perseus.png/revision/latest?cb=20250928002929"},{n:"Phraesto",f:"Hypogean",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/1/11/Hero_Phraesto.png/revision/latest?cb=20241016144514"},{n:"Pippa",f:"Wilder",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a0/Hero_Pippa.png/revision/latest?cb=20260219112513"},{n:"Ravion",f:"Wilder",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/7/7b/Hero_Ravion.png/revision/latest?cb=20250817070036"},{n:"Reinier",f:"Hypogean",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/5/5e/Hero_Reinier.png/revision/latest?cb=20241016144520"},{n:"Rhys",f:"Mauler",r:"S",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/7/77/Hero_Rhys.png/revision/latest?cb=20241016144525"},{n:"Rolan",f:"Celestial",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/8/86/Hero_Rolan.png/revision/latest?cb=20260806090859"},{n:"Rowan",f:"Lightbearer",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/7/7a/Hero_Rowan.png/revision/latest?cb=20241016144530"},{n:"Saida",f:"Hypogean",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/5/58/Hero_Saida.png/revision/latest?cb=20250724143538"},{n:"Salazer",f:"Graveborn",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/d/df/Hero_Salazer.png/revision/latest?cb=20241016144538"},{n:"Satrana",f:"Mauler",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/0/0e/Hero_Satrana.png/revision/latest?cb=20241016144544"},{n:"Scarlita",f:"Celestial",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/e/e7/Hero_Scarlita.png/revision/latest?cb=20241016144549"},{n:"Seth",f:"Mauler",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/1/11/Hero_Seth.png/revision/latest?cb=20241016144554"},{n:"Shadewing",f:"Graveborn",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/4/4a/Hero_Shadewing.png/revision/latest?cb=20251116175311"},{n:"Shakir",f:"Mauler",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/f/fb/Hero_Shakir.png/revision/latest?cb=20241016144600"},{n:"Shemira",f:"Graveborn",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/d/d1/Hero_Shemira.png/revision/latest?cb=20250419061351"},{n:"Silven",f:"Lightbearer",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/0/08/Hero_Silven.png/revision/latest?cb=20260219090709"},{n:"Silvina",f:"Graveborn",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/6/63/Hero_Silvina.png/revision/latest?cb=20241016144605"},{n:"Sinbad",f:"Lightbearer",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/1/1f/Hero_Sinbad.png/revision/latest?cb=20241016144610"},{n:"Smokey_Meerky",f:"Mauler",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/2/21/Hero_Smokey_%26_Meerky.png/revision/latest"},{n:"Solise",f:"Wilder",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/3/30/Hero_Solise.png/revision/latest?cb=20260122201129"},{n:"Sonja",f:"Lightbearer",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/2/2b/Hero_Sonja.png/revision/latest?cb=20241203182610"},{n:"Soren",f:"Mauler",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/7/73/Hero_Soren.png/revision/latest?cb=20251205004515"},{n:"Sylphira",f:"Celestial",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/f/fb/Hero_Sylphira.png/revision/latest?cb=20260525060538"},{n:"Taichi_Agumon",f:"Dimensional",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/4/41/Hero_Taichi_%26_Agumon.png/revision/latest"},{n:"Talene",f:"Celestial",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/6/69/Hero_Talene.png/revision/latest?cb=20241016144627"},{n:"Tasi",f:"Wilder",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/a/a4/Hero_Tasi.png/revision/latest?cb=20241016144631"},{n:"Temesia",f:"Lightbearer",r:"S",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/e/e1/Hero_Temesia.png/revision/latest?cb=20251130210808"},{n:"Thador",f:"Wilder",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/2/2b/Hero_Thador.png/revision/latest?cb=20250703123945"},{n:"Thoran",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/8/8f/Hero_Thoran.png/revision/latest?cb=20241016144637"},{n:"Tilaya",f:"Wilder",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/3/3b/Hero_Tilaya.png/revision/latest?cb=20260108063451"},{n:"Ulmus",f:"Wilder",r:"A",c:"Tank",img:"https://static.wikia.nocookie.net/afk-journey/images/0/0a/Hero_Ulmus.png/revision/latest?cb=20241016144646"},{n:"Vala",f:"Lightbearer",r:"S",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/b/bb/Hero_Vala.png/revision/latest?cb=20241016144651"},{n:"Valen",f:"Lightbearer",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/7/75/Hero_Valen.png/revision/latest?cb=20241016144656"},{n:"Valka",f:"Graveborn",r:"A",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/5/5a/Hero_Valka.png/revision/latest?cb=20250117173019"},{n:"Velara",f:"Wilder",r:"S",c:"Support",img:"https://static.wikia.nocookie.net/afk-journey/images/2/2f/Hero_Velara.png/revision/latest?cb=20250606103651"},{n:"Viperian",f:"Graveborn",r:"A",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/c/c7/Hero_Viperian.png/revision/latest?cb=20241016144701"},{n:"Voracia",f:"Mauler",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/4/4b/Hero_Voracia.png/revision/latest?cb=20260806090908"},{n:"Walker",f:"Lightbearer",r:"A",c:"Rogue",img:"https://static.wikia.nocookie.net/afk-journey/images/1/17/Hero_Walker.png/revision/latest?cb=20241016144706"},{n:"Yamato_Gabumon",f:"Dimensional",r:"S",c:"Mage",img:"https://static.wikia.nocookie.net/afk-journey/images/8/84/Hero_Yamato_%26_Gabumon.png/revision/latest"},{n:"Zandrok",f:"Mauler",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/3/30/Hero_Zandrok.png/revision/latest?cb=20250817070037"},{n:"Zanie",f:"Lightbearer",r:"A",c:"Marksman",img:"https://static.wikia.nocookie.net/afk-journey/images/7/7f/Hero_Zanie.png/revision/latest?cb=20251015215028"},{n:"Zorya",f:"Graveborn",r:"S",c:"Warrior",img:"https://static.wikia.nocookie.net/afk-journey/images/c/c7/Hero_Zorya.png/revision/latest?cb=20260219091654"}];
+
+var TI=["Elite","Elite+","Epic","Epic+","Legendary","Legendary+","Mythic","Mythic+","Supreme","Supreme+","P1","P2","P3","P4"];
+
+// === COST ARRAYS (Sigils only, Acorns = 0 ไม่ track) ===
+//
+// A-Level: เริ่มที่ Elite → Supreme+ ใช้ 63 Sigils (64 copies รวมตัวแรก)
+//   Array = [1,3,4,5,8,10,12,0,20] = 9 elements
+//   [0] Elite → Elite+      = 1 Sigil
+//   [1] Elite+ → Epic       = 3 Sigils
+//   [2] Epic → Epic+        = 4 Sigils
+//   [3] Epic+ → Legendary   = 5 Sigils
+//   [4] Legendary → Leg+    = 8 Sigils
+//   [5] Leg+ → Mythic       = 10 Sigils
+//   [6] Mythic → Mythic+    = 12 Sigils
+//   [7] Mythic+ → Supreme   = 0 Sigils (Acorns only)
+//   [8] Supreme → Supreme+  = 20 Sigils
+//   หลัง Supreme+ → P1(45) P2(45) P3(68) P4(68) = 226 Sigils
+//   รวมทั้งหมด: 63 + 226 = 289 Sigils, P4 = max
+//
+// S-Level: เริ่มที่ Epic (ข้าม Elite, Elite+) → Supreme+ ใช้ 7 Sigils (8 copies รวมตัวแรก)
+//   Array = [0,0,1,0,2,0,2,0,2] = 9 elements (2 ตัวแรก = 0 เพราะข้าม tier)
+//   [0] Epic → Epic+        = 0 Sigils (Acorns only)
+//   [1] Epic+ → Legendary   = 0 Sigils (Acorns only)
+//   [2] Legendary → Leg+    = 1 Sigil
+//   [3] Leg+ → Mythic       = 0 Sigils (Acorns only)
+//   [4] Mythic → Mythic+    = 2 Sigils
+//   [5] Mythic+ → Supreme   = 0 Sigils (Acorns only)
+//   [6] Supreme → Supreme+  = 2 Sigils
+//   หลัง Supreme+ → P1(6) P2(6) P3(9) P4(9) = 30 Sigils
+//   รวมทั้งหมด: 7 + 30 = 37 Sigils, P4 = max
+// === END COST ARRAYS ===
+
+var COST_A=[1,3,4,5,8,10,12,0,20];
+var COST_S=[0,0,1,0,2,0,2,0,2];
+var PARAGON_A=[45,45,68,68];
+var PARAGON_S=[6,6,9,9];
+var FACTIONS=["Lightbearer","Mauler","Wilder","Graveborn"];
+var FA={Lightbearer:{icon:"✨",cls:"lb"},Mauler:{icon:"🔥",cls:"ma"},Wilder:{icon:"🌿",cls:"wi"},Graveborn:{icon:"💀",cls:"gr"}};
+
+// thresholds[r][tierIdx] = total copies needed to be at that tier
+var TH={};
+function buildThresholds(){
+  TH.A=[];TH.S=[];
+  var ca=1,cs=1;
+  TH.A[0]=1;TH.S[2]=1;
+  for(var i=0;i<9;i++){ca+=COST_A[i];TH.A[i+1]=ca;}
+  for(var i=2;i<9;i++){cs+=COST_S[i];TH.S[i+1]=cs;}
+  var pa=64,ps=8;
+  for(var p=0;p<4;p++){pa+=PARAGON_A[p];ps+=PARAGON_S[p];TH.A[10+p]=pa;TH.S[10+p]=ps;}
+}
+buildThresholds();
+
+function getTier(copies,rarity){
+  var t=(rarity==='A')?0:2;
+  var th=TH[rarity];
+  for(var i=t;i<14;i++){if(copies>=th[i])t=i;else break;}
+  return t;
+}
+function copiesToNext(copies,rarity){
+  var tier=getTier(copies,rarity);
+  if(tier>=13)return -1;
+  var th=TH[rarity];
+  var nxt=th[tier+1];
+  if(nxt===undefined)return -1;
+  return Math.max(0,nxt-copies);
+}
+function copiesToTarget(copies,rarity,targetIdx){
+  var th=TH[rarity];
+  var tth=th[targetIdx];
+  if(tth===undefined)return -1;
+  return Math.max(0,tth-copies);
+}
+
+// State: array of 16 cells (4 factions x 4 slots each)
+var state=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");
+var KS="afk_wl_v2";
+var STATE_VER=3; // bump to force reset when init logic changes
+
+// Default heroes from v1 — placed by REAL rarity, not position.
+// Columns 0-1 = S-Level (first two S heroes of the faction), columns 2-3 = A-Level (first two A).
+var INIT_HEROS={
+  "Lightbearer":[{n:"Rowan",r:"S"},{n:"Vala",r:"S"},{n:"Atalanta",r:"S"},{n:"Korin",r:"A"}],
+  "Mauler":[{n:"Shakir",r:"S"},{n:"Mikola",r:"S"},{n:"Odie",r:"A"},{n:"Gerda",r:"A"}],
+  "Wilder":[{n:"Hewynn",r:"S"},{n:"Eironn",r:"S"},{n:"Florabelle",r:"S"},{n:"Arden",r:"A"}],
+  "Graveborn":[{n:"Cecia",r:"S"},{n:"Thoran",r:"S"},{n:"Igor",r:"S"},{n:"Silvina",r:"A"}]
+};
+function initDefault(){
+  var s=[];
+  FACTIONS.forEach(function(faction){
+    var heroes=INIT_HEROS[faction]||[];
+    // Split by real rarity, keep original order within each rarity
+    var sList=[],aList=[];
+    heroes.forEach(function(h){ if(h.r==='S')sList.push(h.n); else aList.push(h.n); });
+    for(var i=0;i<4;i++){
+      if(i===0||i===1){
+        // S-Level columns: first two S heroes (empty slot if fewer)
+        var name=(i<sList.length)?sList[i]:null;
+        s.push({hero:name,faction:faction,rarity:'S',copies:1,targetIdx:13,tier:2});
+      }else{
+        // A-Level columns: first two A heroes (empty slot if fewer)
+        var j=i-2;
+        var name=(j<aList.length)?aList[j]:null;
+        s.push({hero:name,faction:faction,rarity:'A',copies:1,targetIdx:13,tier:0});
+      }
+    }
+  });
+  return s;
+}
+
+function save(){localStorage.setItem(KS,JSON.stringify(state));}
+
+function getHero(name){return HS.find(function(h){return h.n===name;});}
+
+function render(){
+  var html='';
+  // Column headers
+  html+='<div class="grid">';
+  html+='<div class="grid-header">S-Level</div><div class="grid-header">S-Level</div>';
+  html+='<div class="grid-header">A-Level</div><div class="grid-header">A-Level</div>';
+  
+  FACTIONS.forEach(function(faction,fi){
+    html+='<div class="row-label '+FA[faction].cls+'">'+FA[faction].icon+' '+faction+'</div>';
+    for(var ci=0;ci<4;ci++){
+      var idx=fi*4+ci;
+      var cell=state[idx];
+      var hero=getHero(cell.hero);
+      if(!hero){
+        html+='<div class="cell empty" onclick="openPopup('+idx+')"><div style="font-size:30px;margin:20px 0">+</div><div style="font-size:10px;color:#8899aa">Add Hero</div></div>';
+      }else{
+        var tier=getTier(cell.copies,hero.r);
+        var need=copiesToNext(cell.copies,hero.r);
+        var toTarget=copiesToTarget(cell.copies,hero.r,cell.targetIdx);
+        html+='<div class="cell" onclick="openPopup('+idx+')">';
+        html+='<img src="'+hero.img+'" onerror="this.style.display=\'none\'">';
+        html+='<div class="nm">'+hero.n+'</div>';
+        // current tier badge (derived from copies, shown as-is)
+        var startTier_t=(hero.r==="A")?0:2;
+        html+='<div class="tier-sel"><select onclick="event.stopPropagation()" onchange="setTier('+idx+',this.value)">';
+        for(var tt=startTier_t;tt<14;tt++){html+='<option value="'+tt+'"'+(cell.tier===tt?' selected':'')+'>'+TI[tt]+'</option>';}
+        html+='</select></div>';
+        if(need>=0){html+='<div class="need">Need <strong>'+need+'</strong> more</div>';}
+        else{html+='<div class="need done">✓ Max</div>';}
+        html+='<div class="cpy-row">';
+        html+='<button class="cpy-btn" onclick="event.stopPropagation();adjCopies('+idx+',-1)">−</button>';
+        html+='<span class="cpy-val" onclick="editCopies(event,'+idx+')">'+Math.max(0,cell.copies-TH[hero.r][tier])+'</span>';
+        html+='<button class="cpy-btn" onclick="event.stopPropagation();adjCopies('+idx+',1)">+</button>';
+        html+='</div>';
+        // target dropdown
+        html+='<div class="tgt-row">Target: ';
+        var startTier=(hero.r==='A')?0:2;
+        html+='<select onclick="event.stopPropagation()" onchange="setTarget('+idx+',this.value)">';
+        for(var t=startTier;t<14;t++){
+          html+='<option value="'+t+'"'+(cell.targetIdx===t?' selected':'')+'>'+TI[t]+'</option>';
+        }
+        html+='</select>';
+        html+='</div>';
+        html+='<div class="need" style="margin-top:2px">To target: <strong>'+toTarget+'</strong></div>';
+        html+='</div>';
+      }
+    }
+  });
+  html+='</div>';
+  document.getElementById('app').innerHTML=html;
+}
+
+function adjCopies(idx,delta){
+  var c=state[idx];
+  var t1=c.tier||getTier(c.copies,c.rarity);
+  var rem=c.copies-TH[c.rarity][t1]+delta;
+  c.copies=TH[c.rarity][t1]+Math.max(0,rem);
+  clampCopies(c);
+  var derived=getTier(c.copies,c.rarity);
+  if(derived>c.tier)c.tier=derived;
+  save();render();
+}
+function clampCopies(cell){
+  var hero=getHero(cell.hero);
+  if(hero){
+    var maxTier=(hero.r==='A')?TH.A[13]:TH.S[13];
+    if(cell.copies>maxTier)cell.copies=maxTier;
+  }
+}
+function editCopies(e,idx){
+  e.stopPropagation();
+  var span=e.currentTarget;
+  var input=document.createElement('input');
+  input.type='text';
+  var t3=state[idx].tier||getTier(state[idx].copies,state[idx].rarity);
+  input.value=Math.max(0,state[idx].copies-TH[state[idx].rarity][t3]);
+  span.innerHTML='';
+  span.appendChild(input);
+  setTimeout(function(){input.focus();},0);
+  function commit(){
+    if(document.activeElement===input)input.blur();
+    var v=Math.min(999,Math.max(0,parseInt(input.value)||0));
+    var t4=state[idx].tier||getTier(state[idx].copies,state[idx].rarity);
+    state[idx].copies=TH[state[idx].rarity][t4]+v;
+    clampCopies(state[idx]);
+    save();render();
+  }
+  input.addEventListener('focus',function(){input.select();});
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(ev){if(ev.key==='Enter')ev.target.blur();});
+  input.addEventListener('input',function(){var d=input.value.replace(/[^0-9]/g,'');if(d!==input.value)input.value=d;});
+}
+
+// Manual tier selection from dropdown
+function setTier(idx,val){
+  var c=state[idx];
+  c.tier=parseInt(val);
+  var hero=getHero(c.hero);
+  if(hero){var th=TH[c.rarity][c.tier];if(typeof th==="number")c.copies=th;}
+  save();render();}
+
+function setTarget(idx,val){
+  state[idx].targetIdx=parseInt(val);
+  save();render();
+}
+
+// Popup — auto-filter by cell's faction + rarity, no manual filters
+var popupIdx=null;
+function openPopup(idx){
+  popupIdx=idx;
+  var cell=state[idx];
+  document.getElementById('overlay').style.display='block';
+  document.getElementById('popup').style.display='block';
+  renderPopup(cell.faction,cell.rarity);
+}
+function closePopup(){
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('popup').style.display='none';
+  popupIdx=null;
+}
+function selectHero(name){
+  var cell=state[popupIdx];
+  cell.hero=name;
+  var hero=getHero(name);
+  if(hero)cell.rarity=hero.r;
+  cell.tier=getTier(cell.copies,cell.rarity);
+  save();closePopup();render();
+}
+function renderPopup(faction,rarity){
+  document.getElementById('popupTitle').textContent=faction+' / '+rarity+'-Level';
+  var heroes=HS.filter(function(h){return h.f===faction&&h.r===rarity;});
+  var placed={};state.forEach(function(c){if(c.hero)placed[c.hero]=true;});
+  var html='';
+  heroes.forEach(function(h){
+    var cls=placed[h.n]?' active':'';
+    html+='<div class="popup-hero'+cls+'" onclick="selectHero(&#39;'+h.n+'&#39;)">';
+    html+='<img src="'+h.img+'">';
+    html+='<div class="ph-info"><div class="ph-name">'+h.n+'</div>';
+    html+='<div class="ph-meta">'+h.f+' / '+h.r+'</div></div>';
+    if(placed[h.n])html+='<div class="ph-placed">IN USE</div>';
+    html+='</div>';
+  });
+  if(!heroes.length)html='<div style="padding:20px;text-align:center;color:#8899aa">No heroes found</div>';
+  document.getElementById('popupList').innerHTML=html;
+}
+
+var savedVer=parseInt(localStorage.getItem("afk_wl_v2_ver")||"0");
+if(!state || savedVer!==STATE_VER){state=initDefault();localStorage.setItem('afk_wl_v2_ver',STATE_VER);save();}
+state.forEach(function(c){if(typeof c.tier!=='number')c.tier=getTier(c.copies,c.rarity);});
+render();
+</script>
+</body>
+</html>
