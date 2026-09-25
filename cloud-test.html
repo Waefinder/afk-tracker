@@ -12,10 +12,15 @@ window.__calls=[];
 var CLOUD={d:{afk9:JSON.stringify({CloudHero:{c:1}}),
               afk_wl_v2:JSON.stringify([{hero:'Rowan',copies:99}])},
            t:{afk9:Date.now()-1000000, afk_wl_v2:Date.now()+100000}};
+window.__staleGET=false;
+window.__lastPATCH=null;
 window.fetch=function(url,opts){
   window.__calls.push({url:url,method:opts.method||'GET',body:opts.body||null});
-  if((opts.method||'GET')==='GET')
-    return Promise.resolve({ok:true,json:function(){return Promise.resolve({files:{'afk-state.json':{content:JSON.stringify(CLOUD)}}});}});
+  if((opts.method||'GET')==='GET'){
+    var content=window.__staleGET?'{"d":{"afk9":"STALE"},"t":{}}':(window.__lastPATCH||JSON.stringify(CLOUD));
+    return Promise.resolve({ok:true,json:function(){return Promise.resolve({files:{'afk-state.json':{content:content}}});}});
+  }
+  window.__lastPATCH=JSON.parse(opts.body).files['afk-state.json'].content; // echo back like a real gist
   return Promise.resolve({ok:true,json:function(){return Promise.resolve({id:'x'});}});
 };
 </script>
@@ -36,11 +41,27 @@ document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){
     var body=patch?JSON.parse(patch.body):{files:{}};
     out.saveHasRc=!!(body.files&&body.files['afk-state.json']&&body.files['afk-state.json'].content.indexOf('Aster')>=0);
     out.saveHasWl=!!(body.files&&body.files['afk-state.json']&&body.files['afk-state.json'].content.indexOf('Rowan')>=0);
-    out.getAuth=(window.__calls.filter(function(c){return c.method==='GET';})[0]||{}).auth||null;
     out.getCallMade=window.__calls.some(function(c){return c.method==='GET';});
-    // clear test pollution
-    ['cloud_tok','cloud_gist','afk9','afk9__ts','afk_wl_v2','afk_wl_v2__ts','afk_rc_v1','afk_rc_v1__ts'].forEach(function(k){localStorage.removeItem(k);});
-    document.body.textContent='RESULT:'+JSON.stringify(out,null,1);
+    var btn=document.querySelector('button[title*=cloud]');
+    // 1) click = round-trip test; GET echoes PATCHed content -> ☁️✓
+    window.__staleGET=false;
+    btn.click();
+    setTimeout(function(){
+      out.clickCalls={patches:window.__calls.filter(function(c){return c.method==='PATCH';}).length,
+                      gets:window.__calls.filter(function(c){return c.method==='GET';}).length};
+      out.clickOK=(btn.textContent==='☁️✓');
+      out.clickTitle=btn.title;
+      // 2) click again, GET returns mismatched content -> ☁️✗
+      window.__staleGET=true;
+      btn.click();
+      setTimeout(function(){
+        out.staleBtn=btn.textContent;
+        out.staleErr=(btn.textContent==='☁️✗');
+        // clear test pollution
+        ['cloud_tok','cloud_gist','afk9','afk9__ts','afk_wl_v2','afk_wl_v2__ts','afk_rc_v1','afk_rc_v1__ts'].forEach(function(k){localStorage.removeItem(k);});
+        document.body.textContent='RESULT:'+JSON.stringify(out,null,1);
+      },400);
+    },400);
   },2200);
 },100);});
 </script>

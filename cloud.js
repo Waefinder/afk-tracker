@@ -61,8 +61,24 @@
   }
   function ui(state){
     if(!btn)return;
-    btn.textContent=(state==="ok"?"☁️✓":state==="err"?"☁️✗":"☁️");
-    btn.title=state==="ok"?"cloud: synced":state==="err"?"cloud: error — คลิกตั้งค่าใหม่":"cloud: ยังไม่ได้ตั้งค่า";
+    btn.textContent=(state==="ok"?"☁️✓":state==="err"?"☁️✗":state==="wait"?"☁️…":"☁️");
+    var d=new Date().toTimeString().slice(0,5);
+    btn.title=state==="ok"?"cloud: ซิงก์สำเร็จ "+d+" (คลิกเพื่อทดสอบอีกรอบ)"
+      :state==="err"?"cloud: ERROR — ดู console (F12)"
+      :state==="wait"?"cloud: กำลังทดสอบ…":"cloud: ยังไม่ได้ตั้งค่า (คลิกเพื่อตั้งค่า)";
+  }
+  // คลิกตอนตั้งค่าแล้ว = ทดสอบจริง: PATCH ขึ้น → GET กลับ → เทียบว่าได้เหมือนเดิม
+  function testNow(){
+    var g=raw(K_GIST);if(!raw(K_TOK)||!g)return;
+    ui("wait");
+    api("PATCH","/gists/"+g,{files:{"afk-state.json":{content:payload()}}})
+      .then(function(){return api("GET","/gists/"+g);})
+      .then(function(j){
+        var f=j.files&&j.files["afk-state.json"],c=f&&f.content;
+        if(c===payload()){ui("ok");console.info("[cloud] round-trip OK —",KEYS.join(","));}
+        else{ui("err");console.warn("[cloud] round-trip MISMATCH");}
+      })
+      .catch(function(e){ui("err");console.warn("[cloud] test failed",e);});
   }
   var btn=null;
   document.addEventListener("DOMContentLoaded",function(){
@@ -70,7 +86,7 @@
     btn.textContent="☁️";btn.title="cloud sync — คลิกเพื่อตั้งค่า";
     btn.style.cssText="position:fixed;right:12px;bottom:12px;z-index:999;width:34px;height:34px;"+
       "border-radius:50%;border:1px solid #3a4a5a;background:#1a2940;color:#e0e0e0;cursor:pointer;font-size:15px";
-    btn.onclick=function(){if(raw(K_TOK)&&raw(K_GIST))save();else setup();};
+    btn.onclick=function(){if(raw(K_TOK)&&raw(K_GIST))testNow();else setup();};
     document.body.appendChild(btn);
     ui(raw(K_TOK)&&raw(K_GIST)?(timer?"wait":"ok"):"none");
     load();
