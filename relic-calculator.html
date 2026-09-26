@@ -104,22 +104,24 @@ document.getElementById("q").addEventListener("input",e=>{q=e.target.value.toLow
 
 function render(){
   // faction summary (selected heroes only, sorted by sigils needed desc = ขาดเยอะสุด)
-  var fac={},total=0,p4=0,selN=0;
+  var fac={},total=0,p4=0,selN=0,sigS=0,sigA=0;
   HS.forEach(h=>{
     var t=SEL[h.n]; if(t===undefined)return;
     var need=needSigils(copies(h.n),h.r,t);
-    var f=fac[h.f]||(fac[h.f]={n:0,p4:0,sig:0});
+    var f=fac[h.f]||(fac[h.f]={n:0,p4:0,sig:0,s:0,a:0});
     f.n++; f.sig+=need; if(t===13)f.p4++;
+    if(h.r==="S"){f.s+=need;sigS+=need;}else{f.a+=need;sigA+=need;}
     total+=need; selN++; if(t===13)p4++;
   });
   var arr=Object.keys(fac).map(k=>({f:k,d:fac[k]})).sort((a,b)=>b.d.sig-a.d.sig);
   var max=arr.length?arr[0].d.sig:1;
   document.getElementById("status").innerHTML=
-    'เลือกปั้น <strong>'+selN+'</strong> ตัว | ปั้นถึง P4: <strong>'+p4+'</strong> ตัว | ขาดรวม <strong>'+total+'</strong> Sigils'+
+    'เลือกปั้น <strong>'+selN+'</strong> ตัว | ปั้นถึง P4: <strong>'+p4+'</strong> ตัว | ขาดรวม <strong>'+total+'</strong> Sigils (<span style="color:#f0c040">S: '+sigS+'</span> · <span style="color:#a888e0">A: '+sigA+'</span>)'+
     (arr.length?' | เผ่าที่ขาดเยอะสุด: <strong>'+arr[0].f+'</strong>':'');
   document.getElementById("cards").innerHTML=arr.map(x=>
     '<div class="fc-card"><div class="fn">'+x.f+'</div><div class="big">'+x.d.sig+'</div>'+
     '<div class="sub">Sigils · '+x.d.n+' ตัว · P4: '+x.d.p4+' ตัว</div>'+
+    '<div class="sub"><span style="color:#f0c040">S '+x.d.s+'</span> · <span style="color:#a888e0">A '+x.d.a+'</span></div>'+
     '<div class="bar"><i style="width:'+Math.round(x.d.sig/max*100)+'%"></i></div></div>').join("");
 
   // rows grouped by faction
