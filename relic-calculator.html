@@ -33,6 +33,8 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 .fh .cnt{font-size:11px;color:#667;font-weight:400}
 .fh .mini{margin-left:auto;font-size:10px;color:#667;cursor:pointer;border:1px solid #2a3a4a;border-radius:4px;padding:2px 7px}
 .fh .mini:hover{color:#f0c040;border-color:#f0c040}
+.rsub{display:flex;align-items:center;gap:8px;padding:5px 10px;background:#0f1923;border-bottom:1px solid #1a2530}
+.rsub .rc{font-size:10px;color:#667}
 .row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-bottom:1px solid #1a2530;background:#131f2b}
 .row.on{background:#1a2940;border-left:3px solid #f0c040}
 .row input[type=checkbox]{accent-color:#f0c040;width:16px;height:16px;cursor:pointer}
@@ -129,7 +131,12 @@ function render(){
     html+='<div class="fh">'+f+'<span class="cnt">('+on+'/'+heroes.length+')</span>'+
           '<span class="mini" onclick="factionAll(\''+f+'\',true)">all</span>'+
           '<span class="mini" onclick="factionAll(\''+f+'\',false)">none</span></div>';
-    heroes.forEach(h=>{
+    var rGroups=[["S",heroes.filter(function(h){return h.r==="S";})],["A",heroes.filter(function(h){return h.r==="A";})]];
+    rGroups.forEach(function(gp){
+      var gl=gp[1]; if(!gl.length)return;
+      var gOn=gl.filter(function(h){return SEL[h.n]!==undefined;}).length;
+      html+='<div class="rsub"><span class="rs '+gp[0].toLowerCase()+'">'+gp[0]+'</span><span class="rc">'+gOn+'/'+gl.length+'</span></div>';
+      gl.forEach(h=>{
       var t=SEL[h.n], c=copies(h.n), tier=getTier(c,h.r);
       var need=t===undefined?null:needSigils(c,h.r,t);
       html+='<div class="row'+(t!==undefined?' on':'')+'">'+
@@ -142,6 +149,7 @@ function render(){
           TARGETS.map(v=>'<option value="'+v+'"'+(t===v?' selected':'')+'>'+TI[v]+'</option>').join("")+
         '</select>'+
         '<span class="need'+(need===0?' done':'')+'">'+(t===undefined?'—':(need===0?'ครบแล้ว':need+' Sigils'))+'</span></span></div>';
+      });
     });
   });
   document.getElementById("list").innerHTML=html||'<div class="empty">ไม่พบฮีโร่</div>';
