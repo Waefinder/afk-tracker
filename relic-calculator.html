@@ -29,6 +29,8 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 .toolbar input:focus{border-color:#f0c040}
 .toolbar button{padding:8px 12px;border-radius:8px;border:1px solid #3a4a5a;background:#1a2940;color:#8899aa;font-size:12px;cursor:pointer}
 .toolbar button:hover{border-color:#f0c040;color:#e0e0e0}
+.toolbar button.on{border-color:#f0c040;color:#f0c040;font-weight:700}
+.topsum{position:sticky;top:0;z-index:50;background:#0f1923;padding-top:6px;box-shadow:0 6px 10px -6px rgba(0,0,0,.65)}
 .fh{font-size:14px;font-weight:700;color:#f0c040;margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #2a3a4a;display:flex;align-items:center;gap:8px}
 .fh .cnt{font-size:11px;color:#667;font-weight:400}
 .fh .mini{margin-left:auto;font-size:10px;color:#667;cursor:pointer;border:1px solid #2a3a4a;border-radius:4px;padding:2px 7px}
@@ -59,11 +61,14 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
   <div class="nav-links"><a class="nav-btn" href="afk-tracker.html">🗡️ Tracker</a><a class="nav-btn" href="wishlist-mockup-design.html">📋 Wish List</a><a class="nav-btn" href="hero-database.html">🗄️ Hero DB</a><a class="nav-btn active" href="relic-calculator.html">⚔️ Relic Calc</a></div>
 </div>
 <div class="ct">
+  <div class="topsum">
   <div class="status" id="status"></div>
   <div class="fc-cards" id="cards"></div>
+  </div>
   <div class="toolbar">
     <input type="text" id="q" placeholder="Search hero..." autocomplete="off">
     <button onclick="clearAll()">ล้างทั้งหมด</button>
+    <button id="hideBtn" onclick="toggleHide()">Hide unselected</button>
   </div>
   <div id="list"></div>
 </div>
@@ -100,6 +105,8 @@ function setTgt(n,v){SEL[n]=parseInt(v);save();render();}
 function clearAll(){SEL={};save();render();}
 function factionAll(f,on){HS.forEach(h=>{if(h.f===f){if(on)SEL[h.n]=SEL[h.n]||13;else delete SEL[h.n];}});save();render();}
 var q="";
+var hideOff=localStorage.getItem("afk_rc_hide")==="1";
+function toggleHide(){hideOff=!hideOff;localStorage.setItem("afk_rc_hide",hideOff?"1":"0");var b=document.getElementById("hideBtn");if(b)b.classList.toggle("on",hideOff);render();}
 document.getElementById("q").addEventListener("input",e=>{q=e.target.value.toLowerCase();render();});
 
 function render(){
@@ -127,7 +134,7 @@ function render(){
   // rows grouped by faction
   var html="";
   ["Lightbearer","Mauler","Wilder","Graveborn","Celestial","Hypogean","Dimensional"].forEach(f=>{
-    var heroes=HS.filter(h=>h.f===f&&(!q||h.n.toLowerCase().indexOf(q)>=0));
+    var heroes=HS.filter(h=>h.f===f&&(!q||h.n.toLowerCase().indexOf(q)>=0)&&(!hideOff||SEL[h.n]!==undefined));
     if(!heroes.length)return;
     var on=heroes.filter(h=>SEL[h.n]!==undefined).length;
     html+='<div class="fh">'+f+'<span class="cnt">('+on+'/'+heroes.length+')</span>'+
@@ -157,6 +164,7 @@ function render(){
   document.getElementById("list").innerHTML=html||'<div class="empty">ไม่พบฮีโร่</div>';
 }
 render();
+document.getElementById("hideBtn").classList.toggle("on",hideOff);
 /* self-check: cost model vs documented totals (63/289 A, 7/37 S) */
 (function(){
   console.assert(needSigils(0,"A",9)===63,"A->S+ must be 63");
