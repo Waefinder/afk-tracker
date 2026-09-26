@@ -68,6 +68,8 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1923;color:#e0e0e0;min-heig
 <div class="es" id="es"><p>Click a faction or search above</p></div>
 </div>
 <div class="modal" id="modal"><div class="mcard" id="mc"></div></div>
+<script src="data.js"></script>
+<script src="cloud.js"></script>
 <script>var TI=["Elite","Elite+","Epic","Epic+","Legendary","Legendary+","Mythic","Mythic+","Supreme","Supreme+","P1","P2","P3","P4"];
 var PA=["P1","P2","P3","P4"];
 var FA=["Lightbearer","Mauler","Wilder","Graveborn","Celestial","Hypogean","Dimensional"];
@@ -113,6 +115,5 @@ function uS(){var tot=HS.length,sp=0;HS.forEach(h=>{var d=data[h.n];if(d&&d.c>=1
 document.getElementById("sr").addEventListener("input",e=>{fm=null;rFC();rDD(e.target.value);var q=e.target.value.toLowerCase();if(q){var el=document.getElementById("hl");var m=HS.filter(h=>h.n.toLowerCase().indexOf(q)>=0).slice(0,30);el.innerHTML='<div class="grid">'+m.map(h=>'<div class="hero" onclick="openM(\''+h.n+'\')"><img src="'+h.img+'"><div class="nm">'+h.n.replace(/_/g," ")+'</div><div class="lv '+h.r.toLowerCase()+'">'+h.r+'</div></div>').join("")+'</div>'}});
 document.addEventListener("click",e=>{if(!e.target.closest(".sb"))document.getElementById("dd").classList.remove("sh");if(e.target===document.getElementById("modal"))closeM()});
 uS();rFC();</script>
-<script src="cloud.js"></script>
 </body>
 </html>
