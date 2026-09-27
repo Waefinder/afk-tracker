@@ -195,6 +195,15 @@ function initDefault(){
 
 function save(){localStorage.setItem(KS,JSON.stringify(state));}
 
+function normalize(){
+  var seen={};
+  for(var i=0;i<16&&i<state.length;i++){if(state[i]&&state[i].hero)seen[state[i].hero]=true;}
+  for(var j=16;j<state.length;){
+    var h=state[j]&&state[j].hero;
+    if(h&&seen[h]){state.splice(j,1);}else{if(h)seen[h]=true;j++;}
+  }
+}
+
 function getHero(name){return HS.find(function(h){return h.n===name;});}
 
 function render(){
@@ -321,9 +330,24 @@ function closePopup(){
 }
 function selectHero(name){
   var cell=state[popupIdx];
-  cell.hero=name;
   var hero=getHero(name);
+  cell.hero=name;
   if(hero)cell.rarity=hero.r;
+  for(var i=16;i<state.length;i++){
+    if(state[i]&&state[i].hero===name){
+      cell.copies=state[i].copies;
+      if(typeof state[i].targetIdx==="number")cell.targetIdx=state[i].targetIdx;
+      state.splice(i,1);break;
+    }
+  }
+  for(var j=0;j<16&&j<state.length;j++){
+    if(j!==popupIdx&&state[j]&&state[j].hero===name){
+      cell.copies=state[j].copies;
+      if(typeof state[j].targetIdx==="number")cell.targetIdx=state[j].targetIdx;
+      state[j].hero=null;state[j].copies=1;state[j].targetIdx=13;
+      state[j].tier=(state[j].rarity==='A')?0:2;break;
+    }
+  }
   cell.tier=getTier(cell.copies,cell.rarity);
   save();closePopup();render();
 }
@@ -346,11 +370,12 @@ function renderPopup(faction,rarity){
 }
 
 var savedVer=parseInt(localStorage.getItem("afk_wl_v2_ver")||"0");
-if(!state){state=initDefault();localStorage.setItem('afk_wl_v2_ver',STATE_VER);save();}
+if(!state||state.length<16){var old=state||[];state=initDefault();old.forEach(function(c){state.push(c);});localStorage.setItem('afk_wl_v2_ver',STATE_VER);save();}
 else if(savedVer!==STATE_VER){localStorage.setItem('afk_wl_v2_ver',STATE_VER);}
+normalize();
 state.forEach(function(c){if(typeof c.tier!=='number')c.tier=getTier(c.copies,c.rarity);});
 render();
-window.addEventListener("storage",function(e){if(e.key==="afk_wl_v2"){var ns=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");if(Array.isArray(ns)){state=ns;render();if(popupIdx!==null&&state[popupIdx]){var c=state[popupIdx],hh=getHero(c.hero);renderPopup(hh?hh.f:c.faction,hh?hh.r:c.rarity);}}}});
+window.addEventListener("storage",function(e){if(e.key==="afk_wl_v2"){var ns=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");if(Array.isArray(ns)){state=ns;normalize();render();if(popupIdx!==null&&state[popupIdx]){var c=state[popupIdx],hh=getHero(c.hero);renderPopup(hh?hh.f:c.faction,hh?hh.r:c.rarity);}}}});
 </script>
 </body>
 </html>
