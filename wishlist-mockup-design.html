@@ -321,13 +321,10 @@ function closePopup(){
 }
 function selectHero(name){
   var cell=state[popupIdx];
-  var hero=getHero(name);
   cell.hero=name;
-  if(hero){
-    cell.rarity=hero.r;
-    cell.tier=(hero.r==='A')?0:2;
-    cell.copies=TH[hero.r][cell.tier];
-  }
+  var hero=getHero(name);
+  if(hero)cell.rarity=hero.r;
+  cell.tier=getTier(cell.copies,cell.rarity);
   save();closePopup();render();
 }
 function renderPopup(faction,rarity){
