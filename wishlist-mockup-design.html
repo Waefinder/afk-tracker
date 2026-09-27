@@ -333,11 +333,12 @@ function selectHero(name){
   var hero=getHero(name);
   cell.hero=name;
   if(hero)cell.rarity=hero.r;
+  var adopted=false;
   for(var i=16;i<state.length;i++){
     if(state[i]&&state[i].hero===name){
       cell.copies=state[i].copies;
       if(typeof state[i].targetIdx==="number")cell.targetIdx=state[i].targetIdx;
-      state.splice(i,1);break;
+      state.splice(i,1);adopted=true;break;
     }
   }
   for(var j=0;j<16&&j<state.length;j++){
@@ -345,10 +346,16 @@ function selectHero(name){
       cell.copies=state[j].copies;
       if(typeof state[j].targetIdx==="number")cell.targetIdx=state[j].targetIdx;
       state[j].hero=null;state[j].copies=1;state[j].targetIdx=13;
-      state[j].tier=(state[j].rarity==='A')?0:2;break;
+      state[j].tier=(state[j].rarity==='A')?0:2;adopted=true;break;
     }
   }
-  cell.tier=getTier(cell.copies,cell.rarity);
+  if(!adopted){
+    var sr=(hero&&hero.r==='A')?0:2;
+    var rr=(hero&&hero.r)?hero.r:cell.rarity;
+    cell.tier=sr;cell.copies=TH[rr][sr];
+  }else{
+    cell.tier=getTier(cell.copies,cell.rarity);
+  }
   save();closePopup();render();
 }
 function renderPopup(faction,rarity){
