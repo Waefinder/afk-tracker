@@ -282,6 +282,8 @@ function editCopies(e,idx){
     var t4=state[idx].tier||getTier(state[idx].copies,state[idx].rarity);
     state[idx].copies=TH[state[idx].rarity][t4]+v;
     clampCopies(state[idx]);
+    var dv=getTier(state[idx].copies,state[idx].rarity);
+    if(dv>state[idx].tier)state[idx].tier=dv;
     save();render();
   }
   input.addEventListener('focus',function(){input.select();});
@@ -319,16 +321,19 @@ function closePopup(){
 }
 function selectHero(name){
   var cell=state[popupIdx];
-  cell.hero=name;
   var hero=getHero(name);
-  if(hero)cell.rarity=hero.r;
-  cell.tier=getTier(cell.copies,cell.rarity);
+  cell.hero=name;
+  if(hero){
+    cell.rarity=hero.r;
+    cell.tier=(hero.r==='A')?0:2;
+    cell.copies=TH[hero.r][cell.tier];
+  }
   save();closePopup();render();
 }
 function renderPopup(faction,rarity){
   document.getElementById('popupTitle').textContent=faction+' / '+rarity+'-Level';
   var heroes=HS.filter(function(h){return h.f===faction&&h.r===rarity;});
-  var placed={};state.forEach(function(c){if(c.hero)placed[c.hero]=true;});
+  var placed={};for(var pi=0;pi<state.length&&pi<FACTIONS.length*4;pi++){if(state[pi].hero)placed[state[pi].hero]=true;}
   var html='';
   heroes.forEach(function(h){
     var cls=placed[h.n]?' active':'';
@@ -348,7 +353,7 @@ if(!state){state=initDefault();localStorage.setItem('afk_wl_v2_ver',STATE_VER);s
 else if(savedVer!==STATE_VER){localStorage.setItem('afk_wl_v2_ver',STATE_VER);}
 state.forEach(function(c){if(typeof c.tier!=='number')c.tier=getTier(c.copies,c.rarity);});
 render();
-window.addEventListener("storage",function(e){if(e.key==="afk_wl_v2"){var ns=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");if(Array.isArray(ns)){state=ns;render();}}});
+window.addEventListener("storage",function(e){if(e.key==="afk_wl_v2"){var ns=JSON.parse(localStorage.getItem("afk_wl_v2")||"null");if(Array.isArray(ns)){state=ns;render();if(popupIdx!==null&&state[popupIdx]){var c=state[popupIdx],hh=getHero(c.hero);renderPopup(hh?hh.f:c.faction,hh?hh.r:c.rarity);}}}});
 </script>
 </body>
 </html>
