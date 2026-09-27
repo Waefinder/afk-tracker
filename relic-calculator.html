@@ -165,6 +165,7 @@ function render(){
 }
 render();
 document.getElementById("hideBtn").classList.toggle("on",hideOff);
+window.addEventListener("storage",function(e){if(e.key==="afk_wl_v2"){var s=JSON.parse(localStorage.getItem("afk_wl_v2")||"null")||[];PROG={};for(var i=0;i<s.length;i++){if(s[i]&&s[i].hero)PROG[s[i].hero]=s[i].copies||0;}render();}});
 /* self-check: cost model vs documented totals (63/289 A, 7/37 S) */
 (function(){
   console.assert(needSigils(0,"A",9)===63,"A->S+ must be 63");
